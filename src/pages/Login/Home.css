@@ -1,0 +1,97 @@
+
+.home-container {
+  padding: 2rem;
+  text-align: center;
+  position: relative;
+  min-height: 100vh;
+
+  background: linear-gradient(-45deg, #222f78, #684f74, lab(60.72% 65.01 25.73), #322e77);
+  background-size: 400% 400%;
+  animation: animatedBg 12s ease infinite;
+    color: azure;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* 🔁 Background animation */
+@keyframes animatedBg {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* 🟦 Top Right Login Button */
+.top-bar {
+  position: absolute;
+  top: 20px;
+  right: 30px;
+}
+
+.login-btn {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.login-btn:hover {
+  background-color: #0056b3;
+}
+
+/* 🧊 Course Cards Grid (unchanged layout: 3 per row) */
+.course-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 50px;
+  justify-items: center;
+  margin-top: 20px;
+  width: 100%;
+  max-width: 1000px;
+  margin:0;
+}
+
+
+/* ✨ Course Card Styling with Glass Effect */
+.course-card {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 300px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s ease;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.course-card h3,
+.course-card p {
+  margin: 0.5rem 0;
+}
+
+/* Hover Lift */
+.course-card:hover {
+  transform: translateY(-5px);
+}
+
+/* ⏳ Fade In Animation */
+.fade-in {
+  animation: fadeIn 0.8s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

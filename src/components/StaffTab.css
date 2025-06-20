@@ -1,0 +1,57 @@
+.staff-tab {
+  padding: 30px;
+  font-family: sans-serif;
+}
+
+.add-btn {
+  float: right;
+  font-size: 24px;
+  background: black;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 40px;
+}
+
+th, td {
+  border: 1px solid #ddd;
+  padding: 12px;
+  text-align: center;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  right: 0; bottom: 0;
+  background-color: rgba(0,0,0,0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content, .form-modal {
+  background: #fff;
+  padding: 20px;
+  border-radius: 6px;
+  width: 80%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.schedule-table th, .schedule-table td {
+  border: 1px solid #999;
+  padding: 6px;
+  font-size: 14px;
+}
+/* StaffTab.css */
+.schedule-table tr.delayed {
+  background-color: #ffe0e0;
+  font-weight: bold;
+}

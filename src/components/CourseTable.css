@@ -1,0 +1,16 @@
+@keyframes fadeInRow {
+  0% {
+    opacity: 0;
+    transform: translateX(-15px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.course-table tbody tr {
+  animation: fadeInRow 0.4s ease forwards;
+  animation-delay: calc(var(--i) * 50ms);
+  opacity: 0; /* Prevent flash before animation */
+}
