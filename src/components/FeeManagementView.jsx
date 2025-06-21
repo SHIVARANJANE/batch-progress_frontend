@@ -7,8 +7,8 @@ function FeeManagementView() {
 
   useEffect(() => {
     const fetchFees = async () => {
-      const pendingRes = await axios.get("http://localhost:5000/api/fees/pending");
-      const monthRes = await axios.get("http://localhost:5000/api/fees/monthly");
+      const pendingRes = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/fees/pending`);
+      const monthRes = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/fees/monthly`);
       setPendingFees(pendingRes.data);
       setMonthlyTotal(monthRes.data.collected);
     };
