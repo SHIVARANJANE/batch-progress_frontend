@@ -17,7 +17,7 @@ const StaffCompletionView = () => {
   const [data, setData] = useState([]);
 
   useEffect(() => {
-    axios.get('http://localhost:5000/api/staff/completions').then(res => setData(res.data));
+    axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/staff/completions`).then(res => setData(res.data));
   }, []);
 
   const allMonths = Array.from(new Set(
