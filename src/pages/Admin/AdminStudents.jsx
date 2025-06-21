@@ -13,7 +13,7 @@ const AdminStudents = () => {
 
   const fetchStudents = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/students');
+      const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/students`);
       setStudents(res.data);
     } catch (err) {
       console.error('Failed to fetch students:', err);
@@ -37,7 +37,7 @@ const AdminStudents = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this student?')) {
       try {
-        await axios.delete(`http://localhost:5000/api/students/${id}`);
+        await axios.delete(`${process.env.REACT_APP_API_BASE_URL}/api/students/${id}`);
         fetchStudents();
       } catch (err) {
         console.error('Delete failed:', err);
@@ -48,9 +48,9 @@ const AdminStudents = () => {
   const handleFormSave = async (formData) => {
     try {
       if (editStudent) {
-        await axios.put(`http://localhost:5000/api/students/${editStudent._id}`, formData);
+        await axios.put(`${process.env.REACT_APP_API_BASE_URL}/api/students/${editStudent._id}`, formData);
       } else {
-        await axios.post('http://localhost:5000/api/students', formData);
+        await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/students`, formData);
       }
       setShowForm(false);
       fetchStudents();
