@@ -13,7 +13,7 @@ function StaffTab({ isAdminView = false }) {
   const [showCompletionView, setShowCompletionView] = useState(false);
 
   const fetchStaffs = async () => {
-    const res = await axios.get('http://localhost:5000/api/staff');
+    const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/staff`);
     setStaffs(res.data);
   };
 
@@ -27,7 +27,7 @@ function StaffTab({ isAdminView = false }) {
   };
 
   const handleDelete = async (id) => {
-    await axios.delete(`http://localhost:5000/api/staff/${id}`);
+    await axios.delete(`${process.env.REACT_APP_API_BASE_URL}/api/staff/${id}`);
     fetchStaffs();
   };
 
