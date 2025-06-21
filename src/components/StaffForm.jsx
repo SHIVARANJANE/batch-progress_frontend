@@ -94,9 +94,9 @@ const StaffForm = ({ onClose, onSubmit, staff }) => {
     console.log('🟢 handleSubmit triggered with data:', form);
     try {
       if (staff && staff._id) {
-        await axios.put(`http://localhost:5000/api/staff/${staff._id}`, form);
+        await axios.put(`${process.env.REACT_APP_API_BASE_URL}/api/staff/${staff._id}`, form);
       } else {
-        await axios.post('http://localhost:5000/api/staff', form);
+        await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/staff`, form);
       }
       onSubmit();
     } catch (err) {
