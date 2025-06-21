@@ -14,7 +14,7 @@ function Login() {
 
   const handleEmailSubmit = async () => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/auth/user-role?email=${email}`);
+      const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/auth/user-role?email=${email}`);
       const userRole = res.data.role;
       const userEmail=res.data.email;
       setRole(userRole);
@@ -23,7 +23,7 @@ function Login() {
       if (userRole == 'student') {
         // directly send OTP
         console.log(res);
-        const otpRes = await axios.post('http://localhost:5000/api/auth/login', { email });
+        const otpRes = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/auth/login`, { email });
         alert(otpRes.data.message);
         setStep('otp');
         setOtpSent(true);
@@ -37,7 +37,7 @@ function Login() {
 
   const handleLogin = async () => {
     try {
-      const res = await axios.post('http://localhost:5000/api/auth/login', {
+      const res = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/auth/login`, {
         email,
         password
       });
@@ -51,7 +51,7 @@ function Login() {
 
   const handleVerify = async () => {
     try {
-      const res = await axios.post('http://localhost:5000/api/auth/verify-otp', {
+      const res = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/auth/verify-otp`, {
         email,
         otp
       });
