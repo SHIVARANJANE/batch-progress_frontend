@@ -10,7 +10,7 @@ function ForgotPassword() {
 
     const requestOtp = async () => {
         try{
-            await axios.post('http://localhost:5000/api/auth/forgot-password', { email });
+            await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/auth/forgot-password`, { email });
             alert('OTP sent to your email');
             setStep(2);
         }catch(err){
@@ -19,7 +19,7 @@ function ForgotPassword() {
     };
     const resetPassword = async () => {
         try {
-            await axios.post('http://localhost:5000/api/auth/reset-password', { email, otp, newPassword });
+            await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/auth/reset-password`, { email, otp, newPassword });
             alert('Password reset successful');
             setStep(1);
         } catch (err) {
