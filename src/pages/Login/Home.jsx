@@ -8,7 +8,7 @@ function Home() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    axios.get('http://localhost:5000/api/courses')
+    axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/courses`)
       .then(res => {
         const shuffled = res.data.sort(() => 0.5 - Math.random());
         const selected = shuffled.slice(0, 6);
