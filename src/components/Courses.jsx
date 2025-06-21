@@ -14,7 +14,7 @@ function Courses() {
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/courses");
+        const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/courses`);
         setCourses(res.data);
       } catch (err) {
         console.error("❌ Failed to fetch courses:", err);
@@ -31,12 +31,12 @@ function Courses() {
   const handleSaveCourse = async (formData) => {
     try {
       if (editingCourse) {
-        const res = await axios.put(`http://localhost:5000/api/courses/${editingCourse._id}`, formData);
+        const res = await axios.put(`${process.env.REACT_APP_API_BASE_URL}/api/courses/${editingCourse._id}`, formData);
         setCourses(courses.map(course => 
           course._id === editingCourse._id ? res.data : course
         ));
       } else {
-        const res = await axios.post("http://localhost:5000/api/courses", formData);
+        const res = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/courses`, formData);
         setCourses([...courses, res.data]);
       }
       setShowForm(false);
@@ -53,7 +53,7 @@ function Courses() {
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this course?")) {
       try {
-        await axios.delete(`http://localhost:5000/api/courses/${id}`);
+        await axios.delete(`${process.env.REACT_APP_API_BASE_URL}/api/courses/${id}`);
         setCourses(courses.filter((c) => c._id !== id));
       } catch (err) {
         console.error("❌ Delete failed:", err);
