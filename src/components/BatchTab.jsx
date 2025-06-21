@@ -12,9 +12,9 @@
     }, []);
 
     const fetchData = async () => {
-      const batchRes = await axios.get("http://localhost:5000/api/batches");
-      const vacantRes = await axios.get("http://localhost:5000/api/batches/vacant");
-      const waitlistRes = await axios.get("http://localhost:5000/api/batches/waitlist");
+      const batchRes = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/batches`);
+      const vacantRes = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/batches/vacant`);
+      const waitlistRes = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/batches/waitlist`);
 
       setBatches(batchRes.data);
       setVacantBatches(vacantRes.data);
@@ -22,7 +22,7 @@
     };
 
     const assignToBatch = async (studentId, batchId) => {
-      await axios.post("http://localhost:5000/api/batches/assign", { studentId, batchId });
+      await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/batches/assign`, { studentId, batchId });
       fetchData();
     };
 
