@@ -34,7 +34,7 @@ const Students = () => {
       if (editingStudent) {
         await axios.put(`${process.env.REACT_APP_API_BASE_URL}/api/students/${editingStudent._id}`, studentData);
       } else {
-        await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/students', studentData);
+        await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/students`, studentData);
       }
       setShowForm(false);
       setEditingStudent(null);
