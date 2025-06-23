@@ -136,6 +136,7 @@ const StudentFormModal = ({ initialData, onSave, onCancel }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    console.log('Submitting student:', formData);
     onSave(formData);
   };
 

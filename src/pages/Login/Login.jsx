@@ -10,28 +10,33 @@ function Login() {
   const [otp, setOtp] = useState('');
   const [step, setStep] = useState('email'); // 'email' | 'password' | 'otp'
   const [otpSent, setOtpSent] = useState(false);
+  const [message, setMessage] = useState(''); // ⬅️ Added
+  const [messageType, setMessageType] = useState(''); // 'error' | 'success'
   const navigate = useNavigate();
+
+  const showMessage = (msg, type = 'error') => {
+    setMessage(msg);
+    setMessageType(type);
+    setTimeout(() => setMessage(''), 4000); // Auto-hide after 4s
+  };
 
   const handleEmailSubmit = async () => {
     try {
       const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/auth/user-role?email=${email}`);
       const userRole = res.data.role;
-      const userEmail=res.data.email;
+      const userEmail = res.data.email;
       setRole(userRole);
-      console.log(userRole);
-      console.log(userEmail);
-      if (userRole == 'student') {
-        // directly send OTP
-        console.log(res);
+
+      if (userRole === 'student') {
         const otpRes = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/auth/login`, { email });
-        alert(otpRes.data.message);
+        showMessage(otpRes.data.message, 'success');
         setStep('otp');
         setOtpSent(true);
       } else {
         setStep('password');
       }
     } catch (error) {
-      alert(error.response?.data?.message || "Email not found");
+      showMessage(error.response?.data?.message || "Email not found", 'error');
     }
   };
 
@@ -41,11 +46,11 @@ function Login() {
         email,
         password
       });
-      alert(res.data.message);
+      showMessage(res.data.message, 'success');
       setStep('otp');
       setOtpSent(true);
     } catch (error) {
-      alert(error.response?.data?.message || "Login failed");
+      showMessage(error.response?.data?.message || "Login failed", 'error');
     }
   };
 
@@ -59,13 +64,16 @@ function Login() {
       localStorage.setItem('token', token);
       localStorage.setItem('email', email);
       localStorage.setItem('role', role);
-      alert(res.data.message);
-      if (role === 'super_user') navigate('/SuperAdminDashboard');
-      else if (role === 'admin') navigate('/AdminDashboard');
-      else if (role === 'staff') navigate('/StaffDashboard');
-      else navigate('/StudentDashboard');
+      showMessage(res.data.message, 'success');
+
+      setTimeout(() => {
+        if (role === 'super_user') navigate('/SuperAdminDashboard');
+        else if (role === 'admin') navigate('/AdminDashboard');
+        else if (role === 'staff') navigate('/StaffDashboard');
+        else navigate('/StudentDashboard');
+      }, 1000);
     } catch (error) {
-      alert(error.response?.data?.message || "OTP verification failed");
+      showMessage(error.response?.data?.message || "OTP verification failed", 'error');
     }
   };
 
@@ -73,6 +81,13 @@ function Login() {
     <div className="login-background">
       <div className="login-card">
         <h2>Login</h2>
+
+        {/* 🔔 Message Box */}
+        {message && (
+          <div className={`message-box ${messageType}`}>
+            {message}
+          </div>
+        )}
 
         {step === 'email' && (
           <>
