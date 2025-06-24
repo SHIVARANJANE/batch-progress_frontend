@@ -10,6 +10,8 @@ function Courses() {
   const [showForm, setShowForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterVertical, setFilterVertical] = useState('');
+  const role = localStorage.getItem('role');
+  const isAdminView = role === 'admin';
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -32,7 +34,7 @@ function Courses() {
     try {
       if (editingCourse) {
         const res = await axios.put(`${process.env.REACT_APP_API_BASE_URL}/api/courses/${editingCourse._id}`, formData);
-        setCourses(courses.map(course => 
+        setCourses(courses.map(course =>
           course._id === editingCourse._id ? res.data : course
         ));
       } else {
@@ -64,14 +66,21 @@ function Courses() {
 
   const filteredCourses = courses.filter(course => {
     const matchesSearch = course.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesVertical = filterVertical ? course.vertical?.toLowerCase() === filterVertical.toLowerCase() : true;
+    const matchesVertical = filterVertical
+      ? course.vertical?.toLowerCase() === filterVertical.toLowerCase()
+      : true;
     return matchesSearch && matchesVertical;
   });
 
   return (
     <div className="courses-container">
       <h2>Courses</h2>
-      <button className="add-button" onClick={handleAddClick}>➕</button>
+
+      {isAdminView && (
+        <button className="add-button" onClick={handleAddClick}>
+          ➕ Add Course
+        </button>
+      )}
 
       {showForm && (
         <div className="modal-overlay">
@@ -106,6 +115,7 @@ function Courses() {
           courses={filteredCourses}
           onEdit={handleEdit}
           onDelete={handleDelete}
+          isAdminView={isAdminView}
         />
       </div>
     </div>
