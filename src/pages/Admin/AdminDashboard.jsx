@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaBell, FaUserCircle } from 'react-icons/fa';
-import StaffTab from '../../components/StaffTab'; // ✅ import the StaffTab component
+import StaffTab from '../../components/Staff/StaffTab'; // ✅ import the StaffTab component
 
 function AdminDashboard() {
     const navigate = useNavigate();

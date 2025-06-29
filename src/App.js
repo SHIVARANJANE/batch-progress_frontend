@@ -5,11 +5,11 @@ import Login from "./pages/Login/Login";
 import SuperAdminDashboard from "./pages/SuperAdmin/SuperAdminDashboard";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
 import ForgotPassword from "./pages/Login/ForgotPassword";
-import Courses from "./components/Courses";
-import StaffTab from "./components/StaffTab";
-import Students from "./components/Students";
-import BatchTab from "./components/BatchTab";
-import StudentFormModal from "./components/StudentFormModal";
+import Courses from "./components/Course/Courses";
+import StaffTab from "./components/Staff/StaffTab";
+import Students from "./components/Students/Students";
+import BatchTab from "./components/Batch/BatchTab";
+import StudentFormModal from "./components/Students/StudentFormModal";
 function App() {
     return (
         <Router>
@@ -22,9 +22,9 @@ function App() {
                     <Route path="/courses" element={<Courses />} />
                     <Route path="/staff" element={<StaffTab />} />
                     <Route path="/students" element={<Students />} />
-                    <Route path="/batches" element={<BatchTab />} />
                     <Route path="/AdminDashboard" element={<AdminDashboard />} />
                     <Route path="/StudentFormModal" element={<StudentFormModal />} />
+                    <Route path="/batches" element={<BatchTab />} />
                     {/* Add other routes here */}
                 </Routes>
             </div>
