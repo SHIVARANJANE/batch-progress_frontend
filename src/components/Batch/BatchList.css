@@ -1,0 +1,31 @@
+.batch-list {
+  padding: 20px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 0 10px #e1e1e1;
+}
+
+.batch-list h2 {
+  margin-bottom: 20px;
+}
+
+.batch-list table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.batch-list th,
+.batch-list td {
+  padding: 12px;
+  border-bottom: 1px solid #ddd;
+  text-align: left;
+}
+
+.batch-list th {
+  background-color: #f8f8f8;
+  font-weight: 600;
+}
+
+.batch-list tr:hover {
+  background-color: #f1f1f1;
+}

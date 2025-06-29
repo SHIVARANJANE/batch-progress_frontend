@@ -21,7 +21,6 @@ const StudentsTable = ({ students, onViewAttendance, isAdminView, onEdit, onDele
       <table>
         <thead>
           <tr>
-            <th>Student ID</th>
             <th>Name</th>
             <th>Email</th>
             <th>Course</th>
@@ -32,11 +31,10 @@ const StudentsTable = ({ students, onViewAttendance, isAdminView, onEdit, onDele
         <tbody>
           {filtered.map((student) => (
             <tr key={student._id}>
-              <td>{student.studentId}</td>
               <td>{student.name}</td>
               <td>{student.email}</td>
-              <td>{student.courseName}</td>
-              <td>{student.batchTiming}</td>
+              <td>{student.enrollmentId?.courseName || student.enrollmentId?.courseId?.name || '—'}</td>
+              <td>{student.enrollmentId?.sessionLength ? `${student.enrollmentId.sessionLength} hrs` : '—'}</td>
               <td>
                 <button onClick={() => onViewAttendance(student)}>📅 View</button>
                 {isAdminView && (

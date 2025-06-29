@@ -1,0 +1,57 @@
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.form-modal {
+  background: #fff;
+  padding: 2rem;
+  max-height: 90vh;
+  overflow-y: auto;
+  width: 90%;
+  max-width: 700px;
+  border-radius: 10px;
+}
+
+.form-modal input,
+.form-modal select,
+.form-modal button {
+  display: block;
+  margin-bottom: 1rem;
+  width: 100%;
+  padding: 0.5rem;
+  font-size: 1rem;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.days-checkboxes {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+
+.slot-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 1rem;
+}
+
+.toggle-switch {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}

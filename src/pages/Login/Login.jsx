@@ -60,10 +60,14 @@ function Login() {
         email,
         otp
       });
-      const { token, role } = res.data;
+      const { token, role,userId ,staffId} = res.data;
       localStorage.setItem('token', token);
       localStorage.setItem('email', email);
       localStorage.setItem('role', role);
+      localStorage.setItem('userId', userId);
+      localStorage.setItem('staffId', staffId); // 🆕 Add this
+
+      console.log(userId);
       showMessage(res.data.message, 'success');
 
       setTimeout(() => {
