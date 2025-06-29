@@ -8,7 +8,6 @@ const TIME_SLOTS = [
   '06:00-07:00', '07:00-08:00'
 ];
 
-
 // Helper to convert time slot to decimal hour value
 const parseTime = timeStr => {
   const [h, m] = timeStr.split(':').map(Number);
@@ -67,9 +66,8 @@ const StudentFormModal = ({ initialData, onSave, onCancel }) => {
     preferredTimeSlot: ''
   });
   const [assignmentStatus, setAssignmentStatus] = useState(null);
-const [suggestedSlot, setSuggestedSlot] = useState('');
-const [isAssigning, setIsAssigning] = useState(false);
-
+  const [suggestedSlot, setSuggestedSlot] = useState('');
+  const [isAssigning, setIsAssigning] = useState(false);
 
   useEffect(() => {
     fetch(`${process.env.REACT_APP_API_BASE_URL}/api/courses`)
@@ -87,7 +85,6 @@ const [isAssigning, setIsAssigning] = useState(false);
       const cleanInstallments = (initialData.installments || []).map(ins => ({
         ...ins,
         dueDate: ins.dueDate && !isNaN(new Date(ins.dueDate)) ? new Date(ins.dueDate).toISOString().split('T')[0] : ''
-
       }));
 
       setFormData(prev => ({
@@ -132,17 +129,17 @@ const [isAssigning, setIsAssigning] = useState(false);
 
     const start = new Date(startDate);
     const breakSet = new Set(
-  (breakDates || [])
-    .map(d => {
-      try {
-        const jsDate = d instanceof Date ? d : d?.toDate?.(); // handles multi-date-picker format
-        return jsDate && !isNaN(jsDate) ? jsDate.toISOString().split('T')[0] : null;
-      } catch {
-        return null;
-      }
-    })
-    .filter(Boolean)
-);
+      (breakDates || [])
+        .map(d => {
+          try {
+            const jsDate = d instanceof Date ? d : d?.toDate?.(); // handles multi-date-picker format
+            return jsDate && !isNaN(jsDate) ? jsDate.toISOString().split('T')[0] : null;
+          } catch {
+            return null;
+          }
+        })
+        .filter(Boolean)
+    );
 
     let sessionsDone = 0;
     let current = new Date(start);
@@ -241,152 +238,102 @@ const [isAssigning, setIsAssigning] = useState(false);
     }));
   };
 
-const handleAssignToBatch = async () => {
-  setIsAssigning(true);
-  setAssignmentStatus(null);
+  const assignToBatch = async (studentId) => {
+    setIsAssigning(true);
+    setAssignmentStatus(null);
 
-  const hasPaid = formData.paymentMode === 'Single'
-    ? formData.feeDetails.some(fd => fd.status === 'Paid')
-    : formData.installments.some(ins => ins.status === 'Paid');
+    const hasPaid = formData.paymentMode === 'Single'
+      ? formData.feeDetails.some(fd => fd.status === 'Paid')
+      : formData.installments.some(ins => ins.status === 'Paid');
 
-  if (!hasPaid) {
-    alert('❌ Cannot assign to batch. No payment received. Student will be added to the waiting list upon saving.');
-    setAssignmentStatus('waitlist');
-    setIsAssigning(false);
-    return;
-  }
-
-  try {
-    const token = localStorage.getItem('token');
-
-    const res = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/batch/assign`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({
-        studentId: initialData?._id, // ✅ Important!
-      }),
-    });
-
-    const result = await res.json();
-
-    if (result.status === 'assigned') {
-      alert('✅ Student successfully assigned to batch.');
-      setAssignmentStatus('assigned');
-    } else if (result.status === 'suggested') {
-      setSuggestedSlot(result.suggestedSlot);
-      setAssignmentStatus('suggest');
-    } else {
-      alert('⚠️ No available batch found. Student will be added to waiting list.');
+    if (!hasPaid) {
+      alert('❌ Cannot assign to batch. No payment received. Student will be added to the waiting list upon saving.');
       setAssignmentStatus('waitlist');
+      setIsAssigning(false);
+      return;
     }
-  } catch (err) {
-    console.error('Batch assignment failed', err);
-    alert('❌ Batch assignment failed. Please try again.');
-  } finally {
-    setIsAssigning(false);
-  }
-};const assignToBatch = async (studentId) => {
-  setIsAssigning(true);
-  setAssignmentStatus(null);
 
-  const hasPaid = formData.paymentMode === 'Single'
-    ? formData.feeDetails.some(fd => fd.status === 'Paid')
-    : formData.installments.some(ins => ins.status === 'Paid');
+    try {
+      const token = localStorage.getItem('token');
 
-  if (!hasPaid) {
-    alert('❌ Cannot assign to batch. No payment received. Student will be added to waiting list.');
-    setAssignmentStatus('waitlist');
-    setIsAssigning(false);
-    return;
-  }
+      const res = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/batch/assign`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ studentId }),
+      });
 
-  try {
-    const token = localStorage.getItem('token');
+      const result = await res.json();
 
-    const res = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/batch/assign`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({ studentId }),
-    });
-
-    const result = await res.json();
-
-    if (result.status === 'assigned') {
-      alert('✅ Student successfully assigned to batch.');
-      setAssignmentStatus('assigned');
-    } else if (result.status === 'suggested') {
-      setSuggestedSlot(result.suggestedSlot);
-      setAssignmentStatus('suggest');
-    } else {
-      alert('⚠️ No available batch found. Student will be added to waiting list.');
-      setAssignmentStatus('waitlist');
+      if (result.status === 'assigned') {
+        alert('✅ Student successfully assigned to batch.');
+        setAssignmentStatus('assigned');
+      } else if (result.status === 'suggested') {
+        setSuggestedSlot(result.suggestedSlot);
+        setAssignmentStatus('suggest');
+      } else {
+        alert('⚠️ No available batch found. Student will be added to waiting list.');
+        setAssignmentStatus('waitlist');
+      }
+    } catch (err) {
+      console.error('❌ Batch assignment failed', err);
+      alert('❌ Batch assignment failed. Please try again.');
+    } finally {
+      setIsAssigning(false);
     }
-  } catch (err) {
-    console.error('❌ Batch assignment failed', err);
-    alert('❌ Batch assignment failed. Please try again.');
-  } finally {
-    setIsAssigning(false);
-  }
-};
+  };
 
+  const handleSubmit = async () => {
+    setIsAssigning(true);
+    setAssignmentStatus(null);
 
-  const handleSubmit = async (e) => {
-  e.preventDefault();
-
-  const cleanedData = {
-    name: formData.name,
-    email: formData.email,
-    mobile: formData.mobile,
-    regDate: formData.regDate,
-    vertical: formData.vertical,
-    domain: formData.domain,
-    category: formData.category,
-    signature: formData.signature,
-    breakDates: formData.breakDates,
-    preferredTimeSlot: formData.preferredTimeSlot || '',
-    preferredFrequency: formData.frequency,
-    preferredDuration: formData.duration,
-    sessionLength: parseFloat(formData.sessionLength) || 1,
-    // 👇 don't send assignmentStatus yet — we determine it *after* assign call
-    enrollment: {
-      courseId: formData.courseType === 'Individual' ? formData.courseName : null,
+    // Step 1: Create student in DB to get ID
+    const studentPayload = { ...formData };
+    const enrollment = {
+      courseId: formData.courseName,
       courseType: formData.courseType,
-      comboCourses: formData.courseType === 'Combo' ? formData.comboCourses : [],
-      amount: parseFloat(formData.amount) || 0,
+      comboCourses: formData.comboCourses,
+      amount: formData.amount,
       frequency: formData.frequency,
       duration: formData.duration,
-      sessionLength: parseFloat(formData.sessionLength) || 1,
+      sessionLength: formData.sessionLength,
       startDate: formData.startDate,
       endDate: formData.endDate,
       paymentMode: formData.paymentMode,
       feeDetails: formData.feeDetails,
-      installments: formData.installments
-    }
-  };
+      installments: formData.paymentMode === 'Installment' ? formData.installments : []
+    };
 
-  // Save first, then assign
-  try {
-    const response = await onSave(cleanedData); // ⬅️ should return the new student with _id
-    const newStudentId = response?.student?._id || response?._id;
+    const studentData = {
+      ...studentPayload,
+      enrollment,
+    };
 
-    if (!newStudentId) {
-      alert("❌ Failed to retrieve student ID after saving.");
-      return;
-    }
-
-    await assignToBatch(newStudentId);
-  } catch (err) {
-    console.error("❌ Save or assign failed:", err);
-    alert("An error occurred while saving student and assigning to batch.");
-  }
-};
-
+    try {
+       const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/students`, {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify(studentData),
+       });
+       const savedStudent = await response.json();
+       const newStudentId = savedStudent?._id;
+       if (!newStudentId) {
+         alert("❌ Failed to retrieve student ID after saving.");
+         setIsAssigning(false);
+         return;
+       }
+       // Proceed with assigning to batch
+       await assignToBatch(newStudentId);
+     } catch (err) {
+       console.error("❌ Save or assign failed:", err);
+       alert("An error occurred while saving student and assigning to batch.");
+     } finally {
+       setIsAssigning(false);
+       onSave && onSave();
+     }
+   };
 
   return (
     <div className="modal-overlay">
@@ -408,7 +355,7 @@ const handleAssignToBatch = async () => {
           </select>
 
           {formData.courseType === 'Individual' && (
-            <><>
+            <>
               <select name="courseName" value={formData.courseName} onChange={handleChange} required>
                 <option value="">-- Select Course --</option>
                 {courses.map(course => (
@@ -419,17 +366,18 @@ const handleAssignToBatch = async () => {
               <input name="frequency" placeholder="Frequency" value={formData.frequency} onChange={handleChange} />
               <input name="duration" placeholder="Total Duration (Hours)" value={formData.duration} onChange={handleChange} />
               <input name="sessionLength" type="number" step="0.25" min="0.25" placeholder="Session Length (hrs)" value={formData.sessionLength} onChange={handleChange} />
-            </><select
-              name="preferredTimeSlot"
-              value={formData.preferredTimeSlot}
-              onChange={handleChange}
-              required
-            >
+              <select
+                name="preferredTimeSlot"
+                value={formData.preferredTimeSlot}
+                onChange={handleChange}
+                required
+              >
                 <option value="">-- Select Preferred Time Slot --</option>
                 {preferredTimeSlots.map((slot, i) => (
                   <option key={i} value={slot}>{slot}</option>
                 ))}
-              </select></>
+              </select>
+            </>
           )}
 
           {formData.courseType === 'Combo' && (
@@ -541,7 +489,7 @@ const handleAssignToBatch = async () => {
             )}
 
             {assignmentStatus !== 'assigned' && (
-              <button type="button" onClick={handleAssignToBatch} disabled={isAssigning}>
+              <button type="button" onClick={() => assignToBatch(initialData?._id)} disabled={isAssigning}>
                 🚀 Assign to Batch
               </button>
             )}

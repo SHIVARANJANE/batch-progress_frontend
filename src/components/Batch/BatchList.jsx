@@ -7,16 +7,14 @@ const BatchList = () => {
 
   const fetchBatches = async () => {
     try {
-      const token = localStorage.getItem('token');
-      console.log('Token:', token);
       const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/batch`, {
         headers: {
-          Authorization: `Bearer ${token}`
-        }
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
       });
       setBatches(res.data);
     } catch (err) {
-      console.error('Failed to fetch batches:', err);
+      console.error('Error fetching batches:', err);
     } finally {
       setLoading(false);
     }
@@ -26,33 +24,23 @@ const BatchList = () => {
     fetchBatches();
   }, []);
 
-  if (loading) return <p>Loading batches...</p>;
+  if (loading) return <p className="text-center text-gray-500">Loading batches...</p>;
 
   return (
-    <div className="batch-list">
-      <h2>📚 Batches</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Course</th>
-            <th>Staff</th>
-            <th>Time Slot</th>
-            <th>Students</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {batches.map(batch => (
-            <tr key={batch._id}>
-              <td>{batch.courseId?.name}</td>
-              <td>{batch.staffId?.name}</td>
-              <td>{batch.timeSlot}</td>
-              <td>{batch.studentIds?.length} / {batch.maxStudents}</td>
-              <td>{batch.studentIds?.length >= batch.maxStudents ? 'Full' : 'Open'}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="grid gap-4">
+      {batches.map((batch) => (
+        <div
+          key={batch._id}
+          className="bg-white border border-gray-200 rounded-2xl shadow p-4 hover:shadow-md transition duration-200"
+        >
+          <h3 className="text-xl font-bold text-blue-800">{batch.courseId?.name || 'Unnamed Course'}</h3>
+          <p><strong>Staff:</strong> {batch.staffId?.name || 'Unassigned'}</p>
+          <p><strong>Time Slot:</strong> {batch.timeSlot}</p>
+          <p><strong>Frequency:</strong> {batch.frequency}</p>
+          <p><strong>Students:</strong> {batch.studentIds?.length} / {batch.maxStudents}</p>
+          <p><strong>Status:</strong> {batch.status}</p>
+        </div>
+      ))}
     </div>
   );
 };

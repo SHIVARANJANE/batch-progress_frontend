@@ -1,68 +1,74 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
-const WaitingListTab = () => {
-  const [batches, setBatches] = useState([]);
+const WaitingList = () => {
+  const [waitingList, setWaitingList] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const token = localStorage.getItem('token');
-
- const fetchWaitingList = async () => {
+  const fetchWaitingList = async () => {
   try {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      alert('Token missing! Please login again.');
-      return;
-    }
-
-    const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/batch`, {
+    const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/batch/waiting-list`, {
       headers: {
-        Authorization: `Bearer ${token}`
-      }
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
     });
-
-    const batchesWithWaiting = res.data.filter(batch => batch.waitingList?.length > 0);
-    setBatches(batchesWithWaiting);
+    // Flatten the waiting list data
+    const flatList=[];
+    for (const batch of res.data) {
+      for (const student of batch.waitingList) {
+        flatList.push({
+          batchId: batch._id,
+          student: student.studentId,
+          course: batch.courseId?.name,
+          staff: student.staffId?.name,
+          timeSlot: student.timeSlot,
+          preferredTimeSlot: student.preferredTimeSlot,
+          frequency: student.frequency,
+          reason: student.reason,
+        });
+      }
+    }
+    setWaitingList(flatList);
   } catch (err) {
-    console.error('Failed to load waiting list:', err);
-    alert('Failed to fetch waiting list: ' + (err.response?.data?.message || err.message));
+    console.error('Error fetching waiting list:', err);
   } finally {
     setLoading(false);
   }
 };
 
-
-  const approveStudent = async (batchId, studentId) => {
+  const handleApprove = async (batchId, studentId) => {
     try {
       await axios.post(
         `${process.env.REACT_APP_API_BASE_URL}/api/batch/${batchId}/approve-waiting/${studentId}`,
         {},
         {
           headers: {
-            Authorization: `Bearer ${token}`
-          }
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
         }
       );
-      fetchWaitingList(); // refresh after update
+      fetchWaitingList();
     } catch (err) {
-      alert('Approval failed: ' + (err.response?.data?.error || err.message));
+      console.error('Approval failed:', err);
+      alert('Approval failed.');
     }
   };
 
-  const disapproveStudent = async (batchId, studentId) => {
+  const handleDisapprove = async (batchId, studentId) => {
     try {
       await axios.post(
         `${process.env.REACT_APP_API_BASE_URL}/api/batch/${batchId}/disapprove-waiting/${studentId}`,
         {},
         {
           headers: {
-            Authorization: `Bearer ${token}`
-          }
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
         }
       );
-      fetchWaitingList(); // refresh after update
+      fetchWaitingList();
     } catch (err) {
-      alert('Disapproval failed: ' + (err.response?.data?.error || err.message));
+      console.error('Disapproval failed:', err);
+      alert('Disapproval failed.');
     }
   };
 
@@ -70,31 +76,44 @@ const WaitingListTab = () => {
     fetchWaitingList();
   }, []);
 
-  if (loading) return <p>Loading waiting list...</p>;
-
-  if (batches.length === 0) return <p>🎉 No students in the waiting list.</p>;
+  if (loading) return <p className="text-center text-gray-500">Loading waiting list...</p>;
 
   return (
-    <div>
-      <h2>📋 Waiting List Review</h2>
-      {batches.map(batch => (
-        <div key={batch._id} style={{ border: '1px solid #ccc', marginBottom: '1rem', padding: '1rem' }}>
-          <h4>📘 Course: {batch.courseId?.name || 'N/A'} | ⏱️ Time Slot: {batch.timeSlot || 'N/A'}</h4>
-          <ul>
-            {batch.waitingList.map(entry => (
-              <li key={entry.studentId?._id || entry._id} style={{ marginBottom: '0.5rem' }}>
-                👤 {entry.studentId?.name || 'Unnamed'} <br />
-                🕓 Preferred Slot: {entry.preferredTimeSlot} | 📆 Frequency: {entry.frequency} <br />
-                📝 Reason: {entry.reason} <br />
-                <button onClick={() => approveStudent(batch._id, entry.studentId._id)}>✅ Approve</button>{' '}
-                <button onClick={() => disapproveStudent(batch._id, entry.studentId._id)}>❌ Disapprove</button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ))}
+    <div className="grid gap-4">
+      {waitingList.length === 0 ? (
+        <div className="text-gray-500 text-center">🎉 No students in the waiting list.</div>
+      ) : (
+        waitingList.map((entry) => (
+          <div
+            key={`${entry.batchId}_${entry.student._id}`}
+            className="bg-yellow-50 border border-yellow-300 p-4 rounded-2xl shadow-sm hover:shadow-md transition duration-200"
+          >
+            <h3 className="text-lg font-bold text-yellow-800">{entry.student.name}</h3>
+            <p><strong>Course:</strong> {entry.course}</p>
+            <p><strong>Staff:</strong> {entry.staff}</p>
+            <p><strong>Batch Slot:</strong> {entry.timeSlot}</p>
+            <p><strong>Preferred Slot:</strong> {entry.preferredTimeSlot}</p>
+            <p><strong>Frequency:</strong> {entry.frequency}</p>
+            <p><strong>Reason:</strong> {entry.reason}</p>
+            <div className="flex gap-2 mt-3">
+              <button
+                onClick={() => handleApprove(entry.batchId, entry.student._id)}
+                className="px-4 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+              >
+                ✅ Approve
+              </button>
+              <button
+                onClick={() => handleDisapprove(entry.batchId, entry.student._id)}
+                className="px-4 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+              >
+                ❌ Disapprove
+              </button>
+            </div>
+          </div>
+        ))
+      )}
     </div>
   );
 };
 
-export default WaitingListTab;
+export default WaitingList;

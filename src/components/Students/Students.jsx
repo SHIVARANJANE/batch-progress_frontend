@@ -10,7 +10,6 @@ const Students = () => {
   const role = localStorage.getItem('role');
   const isAdminView = role === 'admin';
 
-  // Fetch all students (with enrollment populated)
   const fetchStudents = async () => {
     try {
       const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/students`);
@@ -24,30 +23,28 @@ const Students = () => {
     fetchStudents();
   }, []);
 
-  // Save new or updated student
   const handleSave = async (studentData) => {
-  try {
-    if (editingStudent?._id) {
-      await axios.put(`${process.env.REACT_APP_API_BASE_URL}/api/students/${editingStudent._id}`, studentData);
-      setShowForm(false);
-      setEditingStudent(null);
-      fetchStudents();
-      return { success: true }; // Return dummy response for edit case
-    } else {
-      const res = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/students`, studentData);
-      setShowForm(false);
-      setEditingStudent(null);
-      fetchStudents();
-      return res.data; // ✅ This should include _id
+    try {
+      if (editingStudent?._id) {
+        await axios.put(`${process.env.REACT_APP_API_BASE_URL}/api/students/${editingStudent._id}`, studentData);
+        setShowForm(false);
+        setEditingStudent(null);
+        fetchStudents();
+        return { success: true };
+      } else {
+        const res = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/students`, studentData);
+        setShowForm(false);
+        setEditingStudent(null);
+        fetchStudents();
+        return res.data;
+      }
+    } catch (err) {
+      console.error('Failed to save student:', err);
+      alert('❌ Failed to save student.');
+      throw err;
     }
-  } catch (err) {
-    console.error('Failed to save student:', err);
-    alert('❌ Failed to save student.');
-    throw err; // Allow StudentFormModal to handle
-  }
-};
+  };
 
-  // Delete student
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this student?')) {
       try {
@@ -59,10 +56,8 @@ const Students = () => {
     }
   };
 
-  // Handle edit: flatten student + enrollment fields for modal
   const handleEdit = (student) => {
     const enrollment = student.enrollmentId || {};
-
     const initialData = {
       _id: student._id,
       name: student.name || '',
@@ -77,7 +72,6 @@ const Students = () => {
       preferredFrequency: student.preferredFrequency || '',
       preferredDuration: student.preferredDuration || '',
       preferredTimeSlot: student.preferredTimeSlot || '',
-
       courseType: enrollment.courseType || 'Individual',
       courseName: enrollment.courseId || enrollment.courseName || '',
       comboCourses: enrollment.comboCourses || [''],

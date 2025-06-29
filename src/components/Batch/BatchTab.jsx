@@ -1,42 +1,32 @@
 import React, { useState } from 'react';
 import BatchList from './BatchList';
-import WaitingListTab from './WaitingListTab';
+import WaitingList from './WaitingListTab';
 
 const BatchTab = () => {
-  const [activeTab, setActiveTab] = useState('batches');
-  const token = localStorage.getItem('token');
-  const role = localStorage.getItem('role');
-console.log('Token:', token);
-console.log('Token:', token);
-
-  const tabStyle = (tab) => ({
-    padding: '0.5rem 1rem',
-    borderBottom: activeTab === tab ? '2px solid black' : 'none',
-    background: 'none',
-    border: 'none',
-    cursor: 'pointer',
-    fontWeight: activeTab === tab ? 'bold' : 'normal'
-  });
-
-  if (!token) return <p>⛔ Unauthorized: Please login to access batch management.</p>;
+  const [activeTab, setActiveTab] = useState('list');
 
   return (
-    <div style={{ padding: '1rem' }}>
-      <h2>📦 Batch Management</h2>
-
-      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
-        <button onClick={() => setActiveTab('batches')} style={tabStyle('batches')}>
-          🗂️ Batch List
+    <div className="p-6">
+      <div className="flex justify-center gap-6 mb-6">
+        <button
+          className={`px-6 py-2 rounded-full text-white font-semibold transition duration-200 shadow-md ${
+            activeTab === 'list' ? 'bg-blue-600' : 'bg-gray-400 hover:bg-gray-500'
+          }`}
+          onClick={() => setActiveTab('list')}
+        >
+          📚 Batch List
         </button>
-        {(role === 'admin' || role === 'superadmin') && (
-          <button onClick={() => setActiveTab('waiting')} style={tabStyle('waiting')}>
-            ⏳ Waiting List
-          </button>
-        )}
+        <button
+          className={`px-6 py-2 rounded-full text-white font-semibold transition duration-200 shadow-md ${
+            activeTab === 'waiting' ? 'bg-blue-600' : 'bg-gray-400 hover:bg-gray-500'
+          }`}
+          onClick={() => setActiveTab('waiting')}
+        >
+          ⏳ Waiting List
+        </button>
       </div>
 
-      {activeTab === 'batches' && <BatchList />}
-      {activeTab === 'waiting' && (role === 'admin' || role === 'superadmin') && <WaitingListTab />}
+      {activeTab === 'list' ? <BatchList /> : <WaitingList />}
     </div>
   );
 };
