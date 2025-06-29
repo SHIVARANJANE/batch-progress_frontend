@@ -82,11 +82,12 @@ const [isAssigning, setIsAssigning] = useState(false);
     if (initialData) {
       const cleanFeeDetails = (initialData.feeDetails || []).map((fd, i) => ({
         ...fd,
-        date: fd.date ? new Date(fd.date).toISOString().split('T')[0] : '',
+        date: fd.date && !isNaN(new Date(fd.date)) ? new Date(fd.date).toISOString().split('T')[0] : '',
       }));
       const cleanInstallments = (initialData.installments || []).map(ins => ({
         ...ins,
-        dueDate: ins.dueDate ? new Date(ins.dueDate).toISOString().split('T')[0] : ''
+        dueDate: ins.dueDate && !isNaN(new Date(ins.dueDate)) ? new Date(ins.dueDate).toISOString().split('T')[0] : ''
+
       }));
 
       setFormData(prev => ({
@@ -130,7 +131,18 @@ const [isAssigning, setIsAssigning] = useState(false);
     }
 
     const start = new Date(startDate);
-    const breakSet = new Set((breakDates || []).map(date => new Date(date).toISOString().split('T')[0]));
+    const breakSet = new Set(
+  (breakDates || [])
+    .map(d => {
+      try {
+        const jsDate = d instanceof Date ? d : d?.toDate?.(); // handles multi-date-picker format
+        return jsDate && !isNaN(jsDate) ? jsDate.toISOString().split('T')[0] : null;
+      } catch {
+        return null;
+      }
+    })
+    .filter(Boolean)
+);
 
     let sessionsDone = 0;
     let current = new Date(start);
@@ -228,9 +240,11 @@ const [isAssigning, setIsAssigning] = useState(false);
       installments: [...prev.installments, { sno: prev.installments.length + 1, dueDate: '', amount: '', status: '' }]
     }));
   };
+
 const handleAssignToBatch = async () => {
   setIsAssigning(true);
   setAssignmentStatus(null);
+
   const hasPaid = formData.paymentMode === 'Single'
     ? formData.feeDetails.some(fd => fd.status === 'Paid')
     : formData.installments.some(ins => ins.status === 'Paid');
@@ -243,13 +257,16 @@ const handleAssignToBatch = async () => {
   }
 
   try {
+    const token = localStorage.getItem('token');
+
     const res = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/batch/assign`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
       body: JSON.stringify({
-        ...formData,
-        preferredTimeSlot: formData.preferredTimeSlot,
-        sessionLength: parseFloat(formData.sessionLength)
+        studentId: initialData?._id, // ✅ Important!
       }),
     });
 
@@ -258,7 +275,7 @@ const handleAssignToBatch = async () => {
     if (result.status === 'assigned') {
       alert('✅ Student successfully assigned to batch.');
       setAssignmentStatus('assigned');
-    } else if (result.status === 'suggest') {
+    } else if (result.status === 'suggested') {
       setSuggestedSlot(result.suggestedSlot);
       setAssignmentStatus('suggest');
     } else {
@@ -271,32 +288,105 @@ const handleAssignToBatch = async () => {
   } finally {
     setIsAssigning(false);
   }
+};const assignToBatch = async (studentId) => {
+  setIsAssigning(true);
+  setAssignmentStatus(null);
+
+  const hasPaid = formData.paymentMode === 'Single'
+    ? formData.feeDetails.some(fd => fd.status === 'Paid')
+    : formData.installments.some(ins => ins.status === 'Paid');
+
+  if (!hasPaid) {
+    alert('❌ Cannot assign to batch. No payment received. Student will be added to waiting list.');
+    setAssignmentStatus('waitlist');
+    setIsAssigning(false);
+    return;
+  }
+
+  try {
+    const token = localStorage.getItem('token');
+
+    const res = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/batch/assign`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ studentId }),
+    });
+
+    const result = await res.json();
+
+    if (result.status === 'assigned') {
+      alert('✅ Student successfully assigned to batch.');
+      setAssignmentStatus('assigned');
+    } else if (result.status === 'suggested') {
+      setSuggestedSlot(result.suggestedSlot);
+      setAssignmentStatus('suggest');
+    } else {
+      alert('⚠️ No available batch found. Student will be added to waiting list.');
+      setAssignmentStatus('waitlist');
+    }
+  } catch (err) {
+    console.error('❌ Batch assignment failed', err);
+    alert('❌ Batch assignment failed. Please try again.');
+  } finally {
+    setIsAssigning(false);
+  }
 };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
 
-    if (!assignmentStatus) {
-      alert('⚠️ Please click "Assign to Batch" before saving.');
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  const cleanedData = {
+    name: formData.name,
+    email: formData.email,
+    mobile: formData.mobile,
+    regDate: formData.regDate,
+    vertical: formData.vertical,
+    domain: formData.domain,
+    category: formData.category,
+    signature: formData.signature,
+    breakDates: formData.breakDates,
+    preferredTimeSlot: formData.preferredTimeSlot || '',
+    preferredFrequency: formData.frequency,
+    preferredDuration: formData.duration,
+    sessionLength: parseFloat(formData.sessionLength) || 1,
+    // 👇 don't send assignmentStatus yet — we determine it *after* assign call
+    enrollment: {
+      courseId: formData.courseType === 'Individual' ? formData.courseName : null,
+      courseType: formData.courseType,
+      comboCourses: formData.courseType === 'Combo' ? formData.comboCourses : [],
+      amount: parseFloat(formData.amount) || 0,
+      frequency: formData.frequency,
+      duration: formData.duration,
+      sessionLength: parseFloat(formData.sessionLength) || 1,
+      startDate: formData.startDate,
+      endDate: formData.endDate,
+      paymentMode: formData.paymentMode,
+      feeDetails: formData.feeDetails,
+      installments: formData.installments
+    }
+  };
+
+  // Save first, then assign
+  try {
+    const response = await onSave(cleanedData); // ⬅️ should return the new student with _id
+    const newStudentId = response?.student?._id || response?._id;
+
+    if (!newStudentId) {
+      alert("❌ Failed to retrieve student ID after saving.");
       return;
     }
 
-    const cleanedData = {
-      ...formData,
-      preferredTimeSlot: formData.preferredTimeSlot || '',
-      preferredFrequency: formData.frequency,
-      preferredDuration: formData.duration,
-      sessionLength: parseFloat(formData.sessionLength) || 1,
-      courseName: formData.courseType === 'Individual' ? formData.courseName : '',
-      comboCourses: formData.courseType === 'Combo' ? formData.comboCourses : [],
-      batchAssignmentStatus: assignmentStatus
-    };
+    await assignToBatch(newStudentId);
+  } catch (err) {
+    console.error("❌ Save or assign failed:", err);
+    alert("An error occurred while saving student and assigning to batch.");
+  }
+};
 
-    delete cleanedData.batchTiming;
-    delete cleanedData.preferredBatch;
-
-    onSave(cleanedData);
-  };
 
   return (
     <div className="modal-overlay">

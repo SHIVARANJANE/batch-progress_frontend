@@ -7,8 +7,12 @@ const BatchList = () => {
 
   const fetchBatches = async () => {
     try {
+      const token = localStorage.getItem('token');
+      console.log('Token:', token);
       const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/batch`, {
-        withCredentials: true
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
       });
       setBatches(res.data);
     } catch (err) {

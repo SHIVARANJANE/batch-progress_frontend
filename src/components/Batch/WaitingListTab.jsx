@@ -5,25 +5,44 @@ const WaitingListTab = () => {
   const [batches, setBatches] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchWaitingList = async () => {
-    try {
-      const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/batch`, {
-        withCredentials: true
-      });
+  const token = localStorage.getItem('token');
 
-      // ✅ Only include batches with non-empty waitingList
-      const batchesWithWaiting = res.data.filter(batch => batch.waitingList?.length > 0);
-      setBatches(batchesWithWaiting);
-    } catch (err) {
-      console.error('Failed to load waiting list:', err);
-    } finally {
-      setLoading(false);
+ const fetchWaitingList = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('Token missing! Please login again.');
+      return;
     }
-  };
+
+    const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/batch`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    const batchesWithWaiting = res.data.filter(batch => batch.waitingList?.length > 0);
+    setBatches(batchesWithWaiting);
+  } catch (err) {
+    console.error('Failed to load waiting list:', err);
+    alert('Failed to fetch waiting list: ' + (err.response?.data?.message || err.message));
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const approveStudent = async (batchId, studentId) => {
     try {
-      await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/batch/${batchId}/approve-waiting/${studentId}`);
+      await axios.post(
+        `${process.env.REACT_APP_API_BASE_URL}/api/batch/${batchId}/approve-waiting/${studentId}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
       fetchWaitingList(); // refresh after update
     } catch (err) {
       alert('Approval failed: ' + (err.response?.data?.error || err.message));
@@ -32,7 +51,15 @@ const WaitingListTab = () => {
 
   const disapproveStudent = async (batchId, studentId) => {
     try {
-      await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/batch/${batchId}/disapprove-waiting/${studentId}`);
+      await axios.post(
+        `${process.env.REACT_APP_API_BASE_URL}/api/batch/${batchId}/disapprove-waiting/${studentId}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
       fetchWaitingList(); // refresh after update
     } catch (err) {
       alert('Disapproval failed: ' + (err.response?.data?.error || err.message));

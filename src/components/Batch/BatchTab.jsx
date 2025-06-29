@@ -4,6 +4,10 @@ import WaitingListTab from './WaitingListTab';
 
 const BatchTab = () => {
   const [activeTab, setActiveTab] = useState('batches');
+  const token = localStorage.getItem('token');
+  const role = localStorage.getItem('role');
+console.log('Token:', token);
+console.log('Token:', token);
 
   const tabStyle = (tab) => ({
     padding: '0.5rem 1rem',
@@ -14,6 +18,8 @@ const BatchTab = () => {
     fontWeight: activeTab === tab ? 'bold' : 'normal'
   });
 
+  if (!token) return <p>⛔ Unauthorized: Please login to access batch management.</p>;
+
   return (
     <div style={{ padding: '1rem' }}>
       <h2>📦 Batch Management</h2>
@@ -22,13 +28,15 @@ const BatchTab = () => {
         <button onClick={() => setActiveTab('batches')} style={tabStyle('batches')}>
           🗂️ Batch List
         </button>
-        <button onClick={() => setActiveTab('waiting')} style={tabStyle('waiting')}>
-          ⏳ Waiting List
-        </button>
+        {(role === 'admin' || role === 'superadmin') && (
+          <button onClick={() => setActiveTab('waiting')} style={tabStyle('waiting')}>
+            ⏳ Waiting List
+          </button>
+        )}
       </div>
 
       {activeTab === 'batches' && <BatchList />}
-      {activeTab === 'waiting' && <WaitingListTab />}
+      {activeTab === 'waiting' && (role === 'admin' || role === 'superadmin') && <WaitingListTab />}
     </div>
   );
 };

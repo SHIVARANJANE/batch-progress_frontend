@@ -26,19 +26,26 @@ const Students = () => {
 
   // Save new or updated student
   const handleSave = async (studentData) => {
-    try {
-      if (editingStudent?._id) {
-        await axios.put(`${process.env.REACT_APP_API_BASE_URL}/api/students/${editingStudent._id}`, studentData);
-      } else {
-        await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/students`, studentData);
-      }
+  try {
+    if (editingStudent?._id) {
+      await axios.put(`${process.env.REACT_APP_API_BASE_URL}/api/students/${editingStudent._id}`, studentData);
       setShowForm(false);
       setEditingStudent(null);
       fetchStudents();
-    } catch (err) {
-      console.error('Failed to save student:', err);
+      return { success: true }; // Return dummy response for edit case
+    } else {
+      const res = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/students`, studentData);
+      setShowForm(false);
+      setEditingStudent(null);
+      fetchStudents();
+      return res.data; // ✅ This should include _id
     }
-  };
+  } catch (err) {
+    console.error('Failed to save student:', err);
+    alert('❌ Failed to save student.');
+    throw err; // Allow StudentFormModal to handle
+  }
+};
 
   // Delete student
   const handleDelete = async (id) => {
