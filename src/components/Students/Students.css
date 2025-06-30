@@ -1,0 +1,33 @@
+/* Main Container */
+.students-page {
+  padding: 40px 24px;
+  background-color: #f4f6f9;
+  min-height: 100vh;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+/* Heading */
+.students-page h2 {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 24px;
+}
+
+/* Add Student Button */
+.add-button {
+  background-color: #2563eb;
+  color: #ffffff;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-bottom: 30px;
+}
+
+.add-button:hover {
+  background-color: #1d4ed8;
+}

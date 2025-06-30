@@ -1,16 +1,79 @@
-@keyframes fadeInRow {
-  0% {
-    opacity: 0;
-    transform: translateX(-15px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateX(0);
-  }
+.grouped-table {
+  margin: 20px 0;
 }
 
-.course-table tbody tr {
-  animation: fadeInRow 0.4s ease forwards;
-  animation-delay: calc(var(--i) * 50ms);
-  opacity: 0; /* Prevent flash before animation */
+.grouped-table h3 {
+  background-color: #f0f0f0;
+  padding: 10px;
+  font-size: 1.2rem;
+  border-left: 5px solid #007bff;
+  margin-top: 30px;
+}
+
+.course-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+}
+
+.course-table thead th {
+  background-color: #007bff;
+  color: white;
+  padding: 10px;
+  text-align: left;
+}
+
+.course-table tbody td {
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+.course-table tbody tr:hover {
+  background-color: #f9f9f9;
+}
+
+.icon {
+  margin: 0 6px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.icon:hover {
+  transform: scale(1.2);
+  color: #007bff;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .course-table,
+  .course-table thead,
+  .course-table tbody,
+  .course-table th,
+  .course-table td,
+  .course-table tr {
+    display: block;
+  }
+
+  .course-table thead {
+    display: none;
+  }
+
+  .course-table tr {
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 10px;
+  }
+
+  .course-table td {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+  }
+
+  .course-table td::before {
+    content: attr(data-label);
+    font-weight: bold;
+    margin-right: 10px;
+  }
 }

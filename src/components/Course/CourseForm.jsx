@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FaEdit, FaSave, FaTrash } from 'react-icons/fa';
+import './CourseForm.css';
 
 function CourseForm({ onSave, onDelete, onCancel, initialData }) {
   const [formData, setFormData] = useState({
@@ -70,14 +71,14 @@ function CourseForm({ onSave, onDelete, onCancel, initialData }) {
 
     if (courseType === 'Individual') {
       if (!formData.name) {
-        alert("Please select a course name");
+        alert("Please enter a course name");
         return;
       }
       onSave(formData);
     } else {
       const validCourses = formData.comboCourses.filter(c => c);
       if (validCourses.length < 2) {
-        alert("Please select at least two courses for a combo.");
+        alert("Please add at least two combo courses");
         return;
       }
       onSave({ ...formData, name: '', comboCourses: validCourses });
@@ -94,68 +95,51 @@ function CourseForm({ onSave, onDelete, onCancel, initialData }) {
   const categoryOptions = {
     'Mechanical/Mechatronics': ['AutoCAD2D', 'Catia'],
     Civil: ['AutoCAD', 'BIM'],
-    Architecture:['Vray','Lumion'],
+    Architecture: ['Vray', 'Lumion'],
     Electrical: ['IOT', 'Lighting Design'],
-    'CS/IT':['Python','Java','C','C++'],
-    'Project Management':['PMP','Power BI'],
+    'CS/IT': ['Python', 'Java', 'C', 'C++'],
+    'Project Management': ['PMP', 'Power BI'],
   };
 
   return (
     <div className="course-form">
-      <h3>{initialData ? "Edit Course" : "Add New Course"}</h3>
+      <h3>{initialData ? "✏️ Edit Course" : "➕ Add New Course"}</h3>
 
-      {/* Vertical */}
-      <select name="vertical" value={formData.vertical} onChange={handleChange}>
-        <option value="">Course Vertical</option>
-        <option value="Cadd">Cadd</option>
-        <option value="Livewire">Livewire</option>
-        <option value="Synergy">Synergy</option>
-      </select>
+      <div className="form-grid">
+        <select name="vertical" value={formData.vertical} onChange={handleChange}>
+          <option value="">Select Vertical</option>
+          <option value="Cadd">Cadd</option>
+          <option value="Livewire">Livewire</option>
+          <option value="Synergy">Synergy</option>
+        </select>
 
-      {/* Domain */}
-      <select
-        name="domain"
-        value={formData.domain}
-        onChange={handleChange}
-        disabled={!formData.vertical}
-      >
-        <option value="">Domain</option>
-        {domainOptions[formData.vertical]?.map((domain, index) => (
-          <option key={index} value={domain}>{domain}</option>
-        ))}
-      </select>
+        <select name="domain" value={formData.domain} onChange={handleChange} disabled={!formData.vertical}>
+          <option value="">Select Domain</option>
+          {domainOptions[formData.vertical]?.map((d, i) => (
+            <option key={i} value={d}>{d}</option>
+          ))}
+        </select>
 
-      {/* Category */}
-      <select
-        name="category"
-        value={formData.category}
-        onChange={handleChange}
-        disabled={!formData.domain}
-      >
-        <option value="">Course Category</option>
-        {categoryOptions[formData.domain]?.map((cat, index) => (
-          <option key={index} value={cat}>{cat}</option>
-        ))}
-      </select>
+        <select name="category" value={formData.category} onChange={handleChange} disabled={!formData.domain}>
+          <option value="">Select Category</option>
+          {categoryOptions[formData.domain]?.map((cat, i) => (
+            <option key={i} value={cat}>{cat}</option>
+          ))}
+        </select>
 
-      {/* Course Type */}
-      <select
-        name="courseType"
-        value={formData.courseType}
-        onChange={(e) =>
+        <select name="courseType" value={formData.courseType} onChange={(e) =>
           setFormData({
             ...formData,
             courseType: e.target.value,
             name: '',
             comboCourses: [''],
           })
-        }
-      >
-        <option value="Individual">Individual Course</option>
-        <option value="Combo">Combo Course</option>
-      </select>
+        }>
+          <option value="Individual">Individual Course</option>
+          <option value="Combo">Combo Course</option>
+        </select>
+      </div>
 
-      {/* Course Name */}
       {formData.courseType === 'Individual' ? (
         <input
           type="text"
@@ -167,7 +151,7 @@ function CourseForm({ onSave, onDelete, onCancel, initialData }) {
       ) : (
         <div className="combo-courses">
           {formData.comboCourses.map((course, index) => (
-            <div key={index} style={{ display: 'flex', gap: '10px', marginBottom: '5px' }}>
+            <div key={index} className="combo-row">
               <input
                 type="text"
                 placeholder={`Combo Course #${index + 1}`}
@@ -175,37 +159,37 @@ function CourseForm({ onSave, onDelete, onCancel, initialData }) {
                 onChange={(e) => handleComboChange(index, e.target.value)}
               />
               {formData.comboCourses.length > 1 && (
-                <button type="button" onClick={() => removeComboCourse(index)}>-</button>
+                <button type="button" className="remove-btn" onClick={() => removeComboCourse(index)}>-</button>
               )}
               {index === formData.comboCourses.length - 1 && formData.comboCourses.length < 10 && (
-                <button type="button" onClick={addComboCourse}>+</button>
+                <button type="button" className="add-btn" onClick={addComboCourse}>+</button>
               )}
             </div>
           ))}
         </div>
       )}
 
-      {/* Duration and Fees */}
-      <input
-        type="number"
-        placeholder="Course Duration (Hrs)"
-        name="duration"
-        value={formData.duration}
-        onChange={handleChange}
-      />
-      <input
-        type="number"
-        placeholder="Course Fees"
-        name="fees"
-        value={formData.fees}
-        onChange={handleChange}
-      />
+      <div className="form-grid">
+        <input
+          type="number"
+          placeholder="Course Duration (in hours)"
+          name="duration"
+          value={formData.duration}
+          onChange={handleChange}
+        />
+        <input
+          type="number"
+          placeholder="Course Fees (₹)"
+          name="fees"
+          value={formData.fees}
+          onChange={handleChange}
+        />
+      </div>
 
-      {/* Buttons */}
-      <div className="form-buttons">
-        <FaSave className="icon" onClick={handleSubmit} />
-        {initialData && <FaTrash className="icon" onClick={onDelete} />}
-        <button onClick={onCancel}>Cancel</button>
+      <div className="form-actions">
+        <button onClick={handleSubmit}><FaSave /> Save</button>
+        {initialData && <button className="delete-btn" onClick={onDelete}><FaTrash /> Delete</button>}
+        <button className="cancel-btn" onClick={onCancel}>Cancel</button>
       </div>
     </div>
   );

@@ -1,107 +1,181 @@
-/* StudentFormModal.css */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(20, 20, 20, 0.6);
+  background: rgba(31, 41, 55, 0.7);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  z-index: 999;
 }
 
 .form-modal {
-  background: white;
-  padding: 2rem;
-  width: 90%;
+  background: #ffffff;
+  border-radius: 16px;
+  width: 95%;
   max-width: 900px;
-  border-radius: 10px;
-  overflow-y: auto;
   max-height: 90vh;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+  overflow-y: auto;
+  padding: 30px 40px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+  position: relative;
+  animation: fadeIn 0.3s ease-in-out;
 }
 
 .form-modal h3 {
-  margin-bottom: 1rem;
-  text-align: center;
+  margin-bottom: 24px;
+  font-size: 22px;
+  font-weight: 600;
+  color: #111827;
 }
 
 .form-modal form {
   display: flex;
   flex-direction: column;
-  gap: 0.8rem;
+  gap: 16px;
 }
 
 .form-modal input,
-.form-modal textarea,
-.form-modal select {
-  padding: 0.6rem;
-  font-size: 0.95rem;
-  border-radius: 5px;
-  border: 1px solid #ccc;
+.form-modal select,
+.form-modal textarea {
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  font-size: 14px;
   width: 100%;
 }
 
-table {
+.form-modal textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.form-modal input:focus,
+.form-modal select:focus,
+.form-modal textarea:focus {
+  border-color: #3b82f6;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+}
+
+/* Table styling for fees/installments */
+.fee-table table,
+.installment-table table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 1rem;
+  margin-top: 10px;
 }
 
-table th,
-table td {
-  border: 1px solid #ccc;
-  padding: 0.6rem;
+.fee-table th,
+.fee-table td,
+.installment-table th,
+.installment-table td {
+  border: 1px solid #e5e7eb;
+  padding: 8px;
+  font-size: 13px;
   text-align: center;
 }
 
-table input {
-  width: 100%;
+.fee-table h4,
+.installment-table h4 {
+  margin-top: 16px;
+  font-size: 16px;
+  color: #1f2937;
+}
+
+/* Buttons inside form */
+button {
+  padding: 8px 16px;
+  background-color: #2563eb;
+  color: white;
   border: none;
-  text-align: center;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.3s ease;
 }
 
+button:hover {
+  background-color: #1e40af;
+}
+
+button[type="submit"] {
+  background-color: #10b981;
+}
+
+button[type="submit"]:hover {
+  background-color: #059669;
+}
+
+button[type="button"].cancel {
+  background-color: #f87171;
+}
+
+button[type="button"].cancel:hover {
+  background-color: #ef4444;
+}
+
+/* Modal actions (Save, Cancel, Assign) */
 .modal-actions {
+  margin-top: 20px;
   display: flex;
-  justify-content: space-between;
-  margin-top: 1rem;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
 }
 
-.modal-actions button {
-  padding: 0.6rem 1.5rem;
-  font-weight: bold;
-  font-size: 0.95rem;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
+/* Suggested slots section */
+.suggestion-box {
+  background: #fef3c7;
+  border: 1px dashed #facc15;
+  padding: 14px 20px;
+  border-radius: 12px;
+  margin-bottom: 20px;
 }
 
-.modal-actions button[type="submit"] {
-  background: #4caf50;
-  color: white;
+.suggestion-box p {
+  margin-bottom: 6px;
+  font-size: 14px;
+  color: #92400e;
 }
 
-.modal-actions button[type="button"] {
-  background: #f44336;
-  color: white;
+.suggested-slot-btn {
+  margin: 4px;
+  background-color: #fbbf24;
+  color: #1f2937;
+  font-weight: 600;
 }
 
-.fee-table,
-.installment-table {
-  background: #f9f9f9;
-  padding: 1rem;
-  border-radius: 8px;
-  margin-top: 1rem;
+.suggested-slot-btn:hover {
+  background-color: #f59e0b;
 }
 
-button[type="button"] {
-  background: #1976d2;
-  color: white;
-  border: none;
-  padding: 0.4rem 1rem;
-  border-radius: 4px;
-  cursor: pointer;
-  margin-top: 0.5rem;
+/* For DatePicker label */
+label {
+  font-weight: 600;
+  font-size: 14px;
+  color: #374151;
+  margin-top: 10px;
+  display: block;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Scrollbar styling */
+.form-modal::-webkit-scrollbar {
+  width: 8px;
+}
+.form-modal::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+.form-modal::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
 }

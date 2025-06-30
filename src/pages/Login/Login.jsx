@@ -94,49 +94,59 @@ function Login() {
         )}
 
         {step === 'email' && (
-          <>
-            <input
-              type="email"
-              placeholder="Enter your email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-            <button onClick={handleEmailSubmit}>Next</button>
-          </>
-        )}
+  <>
+    <div className="input-with-icon">
+      <span>📧</span>
+      <input
+        type="email"
+        placeholder="Enter your email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        required
+      />
+    </div>
+    <button onClick={handleEmailSubmit}>Next</button>
+  </>
+)}
 
-        {step === 'password' && (
-          <>
-            <input
-              type="password"
-              placeholder="Enter your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-            <p>
-              <a onClick={() => navigate('/forgot-password')} style={{ cursor: 'pointer', color: 'blue' }}>
-                Forgot Password?
-              </a>
-            </p>
-            <button onClick={handleLogin}>Login</button>
-          </>
-        )}
+{step === 'password' && (
+  <>
+    <div className="input-with-icon">
+      <span>🔒</span>
+      <input
+        type="password"
+        placeholder="Enter your password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        required
+      />
+    </div>
+    <p>
+      <a onClick={() => navigate('/forgot-password')} style={{ cursor: 'pointer' }}>
+        Forgot Password?
+      </a>
+    </p>
+    <button onClick={handleLogin}>Login</button>
+  </>
+)}
 
-        {step === 'otp' && otpSent && (
-          <>
-            <h3>Enter OTP</h3>
-            <input
-              type="text"
-              placeholder="OTP"
-              value={otp}
-              onChange={(e) => setOtp(e.target.value)}
-              required
-            />
-            <button onClick={handleVerify}>Verify OTP</button>
-          </>
-        )}
+{step === 'otp' && otpSent && (
+  <>
+    <h3>Enter OTP</h3>
+    <div className="input-with-icon">
+      <span>🔢</span>
+      <input
+        type="text"
+        placeholder="OTP"
+        value={otp}
+        onChange={(e) => setOtp(e.target.value)}
+        required
+      />
+    </div>
+    <button onClick={handleVerify}>Verify OTP</button>
+  </>
+)}
+
       </div>
     </div>
   );

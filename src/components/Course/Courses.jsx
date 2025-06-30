@@ -74,13 +74,36 @@ function Courses() {
 
   return (
     <div className="courses-container">
-      <h2>Courses</h2>
+      <div className="courses-header">
+        <h2>📚 Course List</h2>
+        {isAdminView && (
+          <button className="add-course-btn" onClick={handleAddClick}>
+            ➕ Add Course
+          </button>
+        )}
+      </div>
 
-      {isAdminView && (
-        <button className="add-button" onClick={handleAddClick}>
-          ➕ Add Course
-        </button>
-      )}
+      <div className="filter-bar">
+        <input
+          type="text"
+          placeholder="🔍 Search by course name"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+        <select value={filterVertical} onChange={(e) => setFilterVertical(e.target.value)}>
+          <option value="">All Verticals</option>
+          <option value="Cadd">Cadd</option>
+          <option value="LiveWire">LiveWire</option>
+          <option value="Synergy">Synergy</option>
+        </select>
+      </div>
+
+      <CourseTable
+        courses={filteredCourses}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        isAdminView={isAdminView}
+      />
 
       {showForm && (
         <div className="modal-overlay">
@@ -94,30 +117,6 @@ function Courses() {
           </div>
         </div>
       )}
-
-      <div className="courses-content">
-        <div className="filter-controls">
-          <input
-            type="text"
-            placeholder="Search by course name..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          <select value={filterVertical} onChange={(e) => setFilterVertical(e.target.value)}>
-            <option value="">All Verticals</option>
-            <option value="Cadd">Cadd</option>
-            <option value="LiveWire">LiveWire</option>
-            <option value="Synergy">Synergy</option>
-          </select>
-        </div>
-
-        <CourseTable
-          courses={filteredCourses}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          isAdminView={isAdminView}
-        />
-      </div>
     </div>
   );
 }

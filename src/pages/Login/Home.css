@@ -1,97 +1,107 @@
-
+/* 🔹 Base Layout */
 .home-container {
-  padding: 2rem;
-  text-align: center;
-  position: relative;
   min-height: 100vh;
-
-  background: linear-gradient(-45deg, #222f78, #684f74, lab(60.72% 65.01 25.73), #322e77);
-  background-size: 400% 400%;
-  animation: animatedBg 12s ease infinite;
-    color: azure;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  background-color: #f9fafb;
+  padding: 40px 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #1f2937;
 }
 
-/* 🔁 Background animation */
-@keyframes animatedBg {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-/* 🟦 Top Right Login Button */
+/* 🔹 Top Bar */
 .top-bar {
-  position: absolute;
-  top: 20px;
-  right: 30px;
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 30px;
 }
 
 .login-btn {
-  background-color: #007bff;
-  color: white;
+  background-color: #2563eb;
+  color: #fff;
   border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-weight: bold;
+  padding: 10px 20px;
+  font-weight: 600;
+  border-radius: 8px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
 .login-btn:hover {
-  background-color: #0056b3;
+  background-color: #1d4ed8;
+  transform: scale(1.03);
 }
 
-/* 🧊 Course Cards Grid (unchanged layout: 3 per row) */
+/* 🔹 Heading */
+.home-container h1 {
+  text-align: center;
+  font-size: 28px;
+  margin-bottom: 30px;
+  color: #111827;
+}
+
+/* 🔹 Course Grid */
 .course-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 50px;
-  justify-items: center;
-  margin-top: 20px;
-  width: 100%;
-  max-width: 1000px;
-  margin:0;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 24px;
+  padding: 0 10px;
 }
 
-
-/* ✨ Course Card Styling with Glass Effect */
+/* 🔹 Course Card */
 .course-card {
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(10px);
-  border-radius: 12px;
-  padding: 1.5rem;
-  width: 100%;
-  max-width: 300px;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-  transition: transform 0.3s ease;
-  color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background-color: #ffffff;
+  border-radius: 16px;
+  padding: 24px 20px;
+  box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.06);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  opacity: 0;
+  animation: fadeIn 0.6s ease-in-out forwards;
 }
 
-.course-card h3,
+.course-card h3 {
+  margin: 0 0 12px;
+  font-size: 18px;
+  color: #1e40af;
+}
+
 .course-card p {
-  margin: 0.5rem 0;
+  margin: 6px 0;
+  font-size: 14px;
+  color: #374151;
 }
 
-/* Hover Lift */
 .course-card:hover {
-  transform: translateY(-5px);
+  transform: translateY(-6px);
+  box-shadow: 0px 8px 30px rgba(0, 0, 0, 0.08);
 }
 
-/* ⏳ Fade In Animation */
-.fade-in {
-  animation: fadeIn 0.8s ease-in;
-}
-
+/* 🔹 Animation */
 @keyframes fadeIn {
-  from {
+  0% {
     opacity: 0;
-    transform: translateY(15px);
+    transform: translateY(12px);
   }
-  to {
+  100% {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0px);
+  }
+}
+
+/* 🔹 Responsive */
+@media (max-width: 500px) {
+  .login-btn {
+    padding: 8px 16px;
+    font-size: 14px;
+  }
+
+  .course-card {
+    padding: 20px 16px;
+  }
+
+  .course-card h3 {
+    font-size: 16px;
+  }
+
+  .home-container h1 {
+    font-size: 22px;
   }
 }

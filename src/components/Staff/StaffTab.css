@@ -1,57 +1,95 @@
-.staff-tab {
-  padding: 30px;
-  font-family: sans-serif;
+.staff-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
 }
 
-.add-btn {
-  float: right;
-  font-size: 24px;
-  background: black;
-  color: white;
-  padding: 4px 12px;
-  border-radius: 50%;
-  border: none;
+.header-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.report-btn {
+  background-color: #000000;
+  border: 1px solid #ccc;
+  padding: 8px 12px;
+  border-radius: 6px;
   cursor: pointer;
 }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 40px;
+.add-btn {
+  background-color: #4caf50;
+  color: white;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
 }
 
-th, td {
+.staff-card-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.staff-card {
+  background: #f9f9f9;
   border: 1px solid #ddd;
-  padding: 12px;
-  text-align: center;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  transition: transform 0.2s;
 }
 
-.modal-overlay {
-  position: fixed;
-  top: 0; left: 0;
-  right: 0; bottom: 0;
-  background-color: rgba(0,0,0,0.4);
+.staff-card:hover {
+  transform: translateY(-4px);
+}
+
+.staff-info h4 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.staff-info p {
+  color: #555;
+  margin: 5px 0 10px;
+  font-size: 14px;
+}
+
+.staff-actions button {
+  margin: 5px 6px 0 0;
+  padding: 6px 12px;
+  border: none;
+  background: #007bff;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.staff-actions button:hover {
+  background-color: #0056b3;
+}
+
+.staff-header {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
 }
 
-.modal-content, .form-modal {
-  background: #fff;
-  padding: 20px;
-  border-radius: 6px;
-  width: 80%;
-  max-height: 90vh;
-  overflow-y: auto;
+.completion-toggle {
+  margin-top: 24px;
+  text-align: center;
 }
 
-.schedule-table th, .schedule-table td {
-  border: 1px solid #999;
-  padding: 6px;
-  font-size: 14px;
-}
-/* StaffTab.css */
-.schedule-table tr.delayed {
-  background-color: #ffe0e0;
-  font-weight: bold;
+.close-btn {
+  margin-top: 16px;
+  background: crimson;
+  color: white;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
 }

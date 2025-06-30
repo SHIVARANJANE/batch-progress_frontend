@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import './BatchList.css'; // ⬅️ Add CSS for cute styling
 
 const BatchList = () => {
   const [batches, setBatches] = useState([]);
@@ -41,32 +42,50 @@ const BatchList = () => {
     fetchBatches();
   }, []);
 
-  if (loading) return <div>Loading batches...</div>;
+  if (loading) return <div className="loading-text">⏳ Loading batches...</div>;
 
   return (
-    <div className="grid gap-4">
+    <div className="batch-list-container">
       {batches.map((batch) => (
-        <div key={batch._id} className="bg-white border p-4 rounded shadow">
-          <h3 className="font-bold text-lg">{batch.courseId?.name || 'Unnamed Course'}</h3>
-          <p><strong>Staff:</strong> {batch.staffId?.name || 'Unassigned'}</p>
-          <p><strong>Batch Slot:</strong> {batch.timeSlot}</p>
-          <p><strong>Frequency:</strong> {batch.frequency}</p>
-          <p><strong>Students:</strong> {batch.studentIds?.length} / {batch.maxStudents}</p>
-          <div>
-            <h4 className="font-semibold">Students:</h4>
-            <ul>
-              {(batch.studentIds || []).map(student => (
-                <li key={student._id} className="flex items-center gap-2">
-                  {student.name} | Frequency: {student.frequency} | Start: {student.startDate} | End: {student.endDate}
-                  <button
-                    className="ml-2 px-2 py-1 bg-blue-500 text-white rounded"
-                    onClick={() => markStudentComplete(batch._id, student._id)}
-                  >
-                    Mark Complete
-                  </button>
-                </li>
-              ))}
-            </ul>
+        <div key={batch._id} className="batch-card">
+          <div className="batch-header">
+            <h3>{batch.courseId?.name || 'Unnamed Course'}</h3>
+            <p><strong>Staff:</strong> {batch.staffId?.name || 'Unassigned'}</p>
+            <p><strong>Slot:</strong> {batch.timeSlot}</p>
+            <p><strong>Frequency:</strong> {batch.frequency}</p>
+            <p><strong>Students:</strong> {batch.studentIds?.length} / {batch.maxStudents}</p>
+          </div>
+
+          <div className="student-table-wrapper">
+            <table className="student-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Frequency</th>
+                  <th>Start Date</th>
+                  <th>End Date</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(batch.studentIds || []).map((student) => (
+                  <tr key={student._id}>
+                    <td>{student.name}</td>
+                    <td>{student.frequency}</td>
+                    <td>{student.startDate}</td>
+                    <td>{student.endDate}</td>
+                    <td>
+                      <button
+                        className="complete-btn"
+                        onClick={() => markStudentComplete(batch._id, student._id)}
+                      >
+                        ✅ Mark Complete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       ))}

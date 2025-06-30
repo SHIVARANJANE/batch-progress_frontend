@@ -1,0 +1,71 @@
+.waiting-list-container {
+  display: grid;
+  gap: 1.5rem;
+  padding: 1rem;
+}
+
+.waiting-card {
+  background: rgba(255, 255, 200, 0.2);
+  border: 1px solid #facc15;
+  border-left: 6px solid #facc15;
+  backdrop-filter: blur(8px);
+  padding: 1.5rem;
+  border-radius: 16px;
+  transition: all 0.3s ease-in-out;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.05);
+}
+
+.waiting-card:hover {
+  transform: scale(1.02);
+  box-shadow: 0 10px 20px rgba(250, 204, 21, 0.25);
+}
+
+.waiting-card h3 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #78350f;
+  margin-bottom: 0.5rem;
+}
+
+.waiting-card p {
+  margin: 0.25rem 0;
+  font-size: 0.95rem;
+  color: #374151;
+}
+
+.waiting-card .flex {
+  margin-top: 1rem;
+}
+
+.waiting-card button {
+  padding: 0.4rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.waiting-card button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.waiting-card button:first-of-type {
+  background-color: #22c55e;
+  color: white;
+}
+
+.waiting-card button:first-of-type:hover:not(:disabled) {
+  background-color: #16a34a;
+}
+
+.waiting-card button:last-of-type {
+  background-color: #ef4444;
+  color: white;
+}
+
+.waiting-card button:last-of-type:hover:not(:disabled) {
+  background-color: #dc2626;
+}

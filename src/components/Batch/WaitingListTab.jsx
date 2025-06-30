@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import './WaitingListTab.css'; // Add this for styles
 
 const WaitingList = () => {
   const [waitingList, setWaitingList] = useState([]);
@@ -63,7 +64,7 @@ const WaitingList = () => {
   if (loading) return <p className="text-center text-gray-500">Loading waiting list...</p>;
 
   return (
-    <div className="grid gap-4">
+    <div className="waiting-list-container">
       {waitingList.length === 0 ? (
         <div className="text-gray-500 text-center">🎉 No students in the waiting list.</div>
       ) : (
