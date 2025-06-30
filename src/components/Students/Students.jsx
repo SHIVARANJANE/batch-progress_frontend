@@ -23,27 +23,55 @@ const Students = () => {
     fetchStudents();
   }, []);
 
-  const handleSave = async (studentData) => {
-    try {
-      if (editingStudent?._id) {
-        await axios.put(`${process.env.REACT_APP_API_BASE_URL}/api/students/${editingStudent._id}`, studentData);
-        setShowForm(false);
-        setEditingStudent(null);
-        fetchStudents();
-        return { success: true };
-      } else {
-        const res = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/students`, studentData);
-        setShowForm(false);
-        setEditingStudent(null);
-        fetchStudents();
-        return res.data;
+ const handleSave = async (studentData) => {
+  try {
+    // Split top-level and enrollment fields
+    const {
+      name, email, mobile, regDate, vertical, domain, category,
+      signature, breakDates, preferredFrequency, preferredDuration, preferredTimeSlot,
+      courseType, courseName, comboCourses, amount, frequency, duration, sessionLength,
+      startDate, endDate, paymentMode, feeDetails, installments
+    } = studentData;
+
+    // Compose payload as backend expects
+    const payload = {
+      name, email, mobile, regDate, vertical, domain, category,
+      signature, breakDates, preferredFrequency, preferredDuration, preferredTimeSlot,
+      enrollment: {
+        courseId: courseName,
+        courseType,
+        comboCourses,
+        amount,
+        frequency,
+        duration,
+        sessionLength,
+        startDate,
+        endDate,
+        paymentMode,
+        feeDetails,
+        installments: paymentMode === 'Installment' ? installments : []
       }
-    } catch (err) {
-      console.error('Failed to save student:', err);
-      alert('❌ Failed to save student.');
-      throw err;
+    };
+
+    if (editingStudent?._id) {
+      await axios.put(`${process.env.REACT_APP_API_BASE_URL}/api/students/${editingStudent._id}`, payload);
+      setShowForm(false);
+      setEditingStudent(null);
+      fetchStudents();
+      return { success: true };
+    } else {
+      const res = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/students`, payload);
+      setShowForm(false);
+      setEditingStudent(null);
+      fetchStudents();
+      return res.data;
     }
-  };
+  } catch (err) {
+    console.error('Failed to save student:', err?.response?.data || err);
+    alert('❌ Failed to save student.');
+    throw err;
+  }
+};
 
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this student?')) {

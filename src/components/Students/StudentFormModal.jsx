@@ -285,10 +285,10 @@ const StudentFormModal = ({ initialData, onSave, onCancel }) => {
     }
   };
 
-  const handleSubmit = async () => {
+const handleSubmit = async (e) => {
+    e.preventDefault();
     setIsAssigning(true);
     setAssignmentStatus(null);
-
     // Step 1: Create student in DB to get ID
     const studentPayload = { ...formData };
     const enrollment = {
@@ -310,30 +310,57 @@ const StudentFormModal = ({ initialData, onSave, onCancel }) => {
       ...studentPayload,
       enrollment,
     };
+  try {
+    let studentId = null;
+    let response, savedStudent;
 
-    try {
-       const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/students`, {
-         method: 'POST',
-         headers: { 'Content-Type': 'application/json' },
-         body: JSON.stringify(studentData),
-       });
-       const savedStudent = await response.json();
-       const newStudentId = savedStudent?._id;
-       if (!newStudentId) {
-         alert("❌ Failed to retrieve student ID after saving.");
-         setIsAssigning(false);
-         return;
-       }
-       // Proceed with assigning to batch
-       await assignToBatch(newStudentId);
-     } catch (err) {
-       console.error("❌ Save or assign failed:", err);
-       alert("An error occurred while saving student and assigning to batch.");
-     } finally {
-       setIsAssigning(false);
-       onSave && onSave();
-     }
-   };
+    if (initialData && initialData._id) {
+      // Edit mode: update existing student
+      response = await fetch(
+        `${process.env.REACT_APP_API_BASE_URL}/api/students/${initialData._id}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(studentData),
+        }
+      );
+      savedStudent = await response.json();
+      if (!response.ok) {
+        alert(savedStudent.error || "❌ Failed to update student.");
+        setIsAssigning(false);
+        return;
+      }
+      studentId = initialData._id;
+    } else {
+      // Add mode: create new student
+      response = await fetch(
+        `${process.env.REACT_APP_API_BASE_URL}/api/students`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(studentData),
+        }
+      );
+      savedStudent = await response.json();
+      studentId = savedStudent?.student?._id || savedStudent?._id;
+      if (!studentId) {
+        alert("❌ Failed to retrieve student ID after saving.");
+        setIsAssigning(false);
+        return;
+      }
+    }
+
+    // Proceed with assigning to batch
+    await assignToBatch(studentId);
+  } catch (err) {
+    console.error("❌ Save or assign failed:", err);
+    alert("An error occurred while saving student and assigning to batch.");
+  } finally {
+    setIsAssigning(false);
+    // FIX: Pass studentData to onSave!
+    onSave && onSave(studentData);
+  }
+};
 
   return (
     <div className="modal-overlay">
