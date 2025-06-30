@@ -2,11 +2,14 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import StudentsTable from './StudentsTable';
 import StudentFormModal from './StudentFormModal';
+import './Students.css'; // New CSS file for styles
+import StudentAttendanceModal from './StudentsAttendanceModal';
 
 const Students = () => {
   const [students, setStudents] = useState([]);
   const [editingStudent, setEditingStudent] = useState(null);
   const [showForm, setShowForm] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState(null);
   const role = localStorage.getItem('role');
   const isAdminView = role === 'admin';
 
@@ -135,8 +138,15 @@ const Students = () => {
         onEdit={handleEdit}
         onDelete={handleDelete}
         isAdminView={isAdminView}
+        onViewAttendance={setSelectedStudent}
       />
-
+       {/* Show attendance modal if a student is selected */}
+      {selectedStudent && (
+        <StudentAttendanceModal
+          student={selectedStudent}
+          onClose={() => setSelectedStudent(null)}
+        />
+      )}
       {showForm && (
         <StudentFormModal
           initialData={editingStudent}

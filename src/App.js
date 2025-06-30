@@ -4,6 +4,7 @@ import Home from "./pages/Login/Home";
 import Login from "./pages/Login/Login";
 import SuperAdminDashboard from "./pages/SuperAdmin/SuperAdminDashboard";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
+import StaffDashboard from "./pages/Staff/StaffDashboard";
 import ForgotPassword from "./pages/Login/ForgotPassword";
 import Courses from "./components/Course/Courses";
 import StaffTab from "./components/Staff/StaffTab";
@@ -25,6 +26,7 @@ function App() {
                     <Route path="/AdminDashboard" element={<AdminDashboard />} />
                     <Route path="/StudentFormModal" element={<StudentFormModal />} />
                     <Route path="/batches" element={<BatchTab />} />
+                    <Route path="/StaffDashboard" element={<StaffDashboard />} />
                     {/* Add other routes here */}
                 </Routes>
             </div>
