@@ -20,25 +20,54 @@ const BatchList = () => {
     }
   };
 
+  const markStudentComplete = async (batchId, studentId) => {
+    try {
+      await axios.post(
+        `${process.env.REACT_APP_API_BASE_URL}/api/batch/${batchId}/mark-complete/${studentId}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        }
+      );
+      fetchBatches();
+    } catch (err) {
+      alert('Failed to mark student complete.');
+    }
+  };
+
   useEffect(() => {
     fetchBatches();
   }, []);
 
-  if (loading) return <p className="text-center text-gray-500">Loading batches...</p>;
+  if (loading) return <div>Loading batches...</div>;
 
   return (
     <div className="grid gap-4">
       {batches.map((batch) => (
-        <div
-          key={batch._id}
-          className="bg-white border border-gray-200 rounded-2xl shadow p-4 hover:shadow-md transition duration-200"
-        >
-          <h3 className="text-xl font-bold text-blue-800">{batch.courseId?.name || 'Unnamed Course'}</h3>
+        <div key={batch._id} className="bg-white border p-4 rounded shadow">
+          <h3 className="font-bold text-lg">{batch.courseId?.name || 'Unnamed Course'}</h3>
           <p><strong>Staff:</strong> {batch.staffId?.name || 'Unassigned'}</p>
-          <p><strong>Time Slot:</strong> {batch.timeSlot}</p>
+          <p><strong>Batch Slot:</strong> {batch.timeSlot}</p>
           <p><strong>Frequency:</strong> {batch.frequency}</p>
           <p><strong>Students:</strong> {batch.studentIds?.length} / {batch.maxStudents}</p>
-          <p><strong>Status:</strong> {batch.status}</p>
+          <div>
+            <h4 className="font-semibold">Students:</h4>
+            <ul>
+              {(batch.studentIds || []).map(student => (
+                <li key={student._id} className="flex items-center gap-2">
+                  {student.name} | Frequency: {student.frequency} | Start: {student.startDate} | End: {student.endDate}
+                  <button
+                    className="ml-2 px-2 py-1 bg-blue-500 text-white rounded"
+                    onClick={() => markStudentComplete(batch._id, student._id)}
+                  >
+                    Mark Complete
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       ))}
     </div>

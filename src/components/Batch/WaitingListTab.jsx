@@ -6,35 +6,19 @@ const WaitingList = () => {
   const [loading, setLoading] = useState(true);
 
   const fetchWaitingList = async () => {
-  try {
-    const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/batch/waiting-list`, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`,
-      },
-    });
-    // Flatten the waiting list data
-    const flatList=[];
-    for (const batch of res.data) {
-      for (const student of batch.waitingList) {
-        flatList.push({
-          batchId: batch._id,
-          student: student.studentId,
-          course: batch.courseId?.name,
-          staff: student.staffId?.name,
-          timeSlot: student.timeSlot,
-          preferredTimeSlot: student.preferredTimeSlot,
-          frequency: student.frequency,
-          reason: student.reason,
-        });
-      }
+    try {
+      const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/batch/waiting-list`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      setWaitingList(res.data);
+    } catch (err) {
+      console.error('Error fetching waiting list:', err);
+    } finally {
+      setLoading(false);
     }
-    setWaitingList(flatList);
-  } catch (err) {
-    console.error('Error fetching waiting list:', err);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const handleApprove = async (batchId, studentId) => {
     try {
@@ -95,16 +79,19 @@ const WaitingList = () => {
             <p><strong>Preferred Slot:</strong> {entry.preferredTimeSlot}</p>
             <p><strong>Frequency:</strong> {entry.frequency}</p>
             <p><strong>Reason:</strong> {entry.reason}</p>
+            <p><strong>Status:</strong> {entry.status}</p>
             <div className="flex gap-2 mt-3">
               <button
                 onClick={() => handleApprove(entry.batchId, entry.student._id)}
                 className="px-4 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+                disabled={entry.status !== 'admin_pending'}
               >
                 ✅ Approve
               </button>
               <button
                 onClick={() => handleDisapprove(entry.batchId, entry.student._id)}
                 className="px-4 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                disabled={entry.status !== 'admin_pending'}
               >
                 ❌ Disapprove
               </button>

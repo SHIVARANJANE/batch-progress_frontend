@@ -8,7 +8,6 @@ const TIME_SLOTS = [
   '06:00-07:00', '07:00-08:00'
 ];
 
-// Helper to convert time slot to decimal hour value
 const parseTime = timeStr => {
   const [h, m] = timeStr.split(':').map(Number);
   return h + m / 60;
@@ -66,7 +65,8 @@ const StudentFormModal = ({ initialData, onSave, onCancel }) => {
     preferredTimeSlot: ''
   });
   const [assignmentStatus, setAssignmentStatus] = useState(null);
-  const [suggestedSlot, setSuggestedSlot] = useState('');
+  const [suggestedSlots, setSuggestedSlots] = useState([]);
+  const [suggestionReason, setSuggestionReason] = useState('');
   const [isAssigning, setIsAssigning] = useState(false);
 
   useEffect(() => {
@@ -106,7 +106,6 @@ const StudentFormModal = ({ initialData, onSave, onCancel }) => {
     }
   }, [initialData]);
 
-  // End date calculation
   useEffect(() => {
     const { duration, frequency, startDate, breakDates, sessionLength } = formData;
 
@@ -132,7 +131,7 @@ const StudentFormModal = ({ initialData, onSave, onCancel }) => {
       (breakDates || [])
         .map(d => {
           try {
-            const jsDate = d instanceof Date ? d : d?.toDate?.(); // handles multi-date-picker format
+            const jsDate = d instanceof Date ? d : d?.toDate?.();
             return jsDate && !isNaN(jsDate) ? jsDate.toISOString().split('T')[0] : null;
           } catch {
             return null;
@@ -160,7 +159,6 @@ const StudentFormModal = ({ initialData, onSave, onCancel }) => {
     formData.sessionLength
   ]);
 
-  // Dynamic time slot generator based on sessionLength
   useEffect(() => {
     const length = parseFloat(formData.sessionLength);
     if (!isNaN(length) && length > 0) {
@@ -238,23 +236,14 @@ const StudentFormModal = ({ initialData, onSave, onCancel }) => {
     }));
   };
 
-  const assignToBatch = async (studentId) => {
+  const assignToBatch = async (studentId, selectedSlot = null) => {
     setIsAssigning(true);
     setAssignmentStatus(null);
 
-    const hasPaid = formData.paymentMode === 'Single'
-      ? formData.feeDetails.some(fd => fd.status === 'Paid')
-      : formData.installments.some(ins => ins.status === 'Paid');
-
-    if (!hasPaid) {
-      alert('❌ Cannot assign to batch. No payment received. Student will be added to the waiting list upon saving.');
-      setAssignmentStatus('waitlist');
-      setIsAssigning(false);
-      return;
-    }
-
     try {
       const token = localStorage.getItem('token');
+      const body = { studentId };
+      if (selectedSlot) body.preferredTimeSlot = selectedSlot;
 
       const res = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/batch/assign`, {
         method: 'POST',
@@ -262,34 +251,39 @@ const StudentFormModal = ({ initialData, onSave, onCancel }) => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ studentId }),
+        body: JSON.stringify(body),
       });
 
       const result = await res.json();
 
-      if (result.status === 'assigned') {
-        alert('✅ Student successfully assigned to batch.');
-        setAssignmentStatus('assigned');
+      if (result.status === 'waiting') {
+        alert('Student added to waiting list (unpaid).');
+        setAssignmentStatus('waiting');
+      } else if (result.status === 'admin_approval') {
+        alert('Student added to waiting list for admin approval.');
+        setAssignmentStatus('admin_approval');
       } else if (result.status === 'suggested') {
-        setSuggestedSlot(result.suggestedSlot);
-        setAssignmentStatus('suggest');
+        setSuggestedSlots(result.suggestedSlots || []);
+        setAssignmentStatus('suggested');
+        setSuggestionReason(result.reason || '');
       } else {
-        alert('⚠️ No available batch found. Student will be added to waiting list.');
-        setAssignmentStatus('waitlist');
+        alert(result.message || 'Batch assignment failed.');
+        setAssignmentStatus('error');
       }
     } catch (err) {
       console.error('❌ Batch assignment failed', err);
       alert('❌ Batch assignment failed. Please try again.');
+      setAssignmentStatus('error');
     } finally {
       setIsAssigning(false);
     }
   };
 
-const handleSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsAssigning(true);
     setAssignmentStatus(null);
-    // Step 1: Create student in DB to get ID
+
     const studentPayload = { ...formData };
     const enrollment = {
       courseId: formData.courseName,
@@ -310,57 +304,54 @@ const handleSubmit = async (e) => {
       ...studentPayload,
       enrollment,
     };
-  try {
-    let studentId = null;
-    let response, savedStudent;
 
-    if (initialData && initialData._id) {
-      // Edit mode: update existing student
-      response = await fetch(
-        `${process.env.REACT_APP_API_BASE_URL}/api/students/${initialData._id}`,
-        {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(studentData),
+    try {
+      let studentId = null;
+      let response, savedStudent;
+
+      if (initialData && initialData._id) {
+        response = await fetch(
+          `${process.env.REACT_APP_API_BASE_URL}/api/students/${initialData._id}`,
+          {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(studentData),
+          }
+        );
+        savedStudent = await response.json();
+        if (!response.ok) {
+          alert(savedStudent.error || "❌ Failed to update student.");
+          setIsAssigning(false);
+          return;
         }
-      );
-      savedStudent = await response.json();
-      if (!response.ok) {
-        alert(savedStudent.error || "❌ Failed to update student.");
-        setIsAssigning(false);
-        return;
-      }
-      studentId = initialData._id;
-    } else {
-      // Add mode: create new student
-      response = await fetch(
-        `${process.env.REACT_APP_API_BASE_URL}/api/students`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(studentData),
+        studentId = initialData._id;
+      } else {
+        response = await fetch(
+          `${process.env.REACT_APP_API_BASE_URL}/api/students`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(studentData),
+          }
+        );
+        savedStudent = await response.json();
+        studentId = savedStudent?.student?._id || savedStudent?._id;
+        if (!studentId) {
+          alert("❌ Failed to retrieve student ID after saving.");
+          setIsAssigning(false);
+          return;
         }
-      );
-      savedStudent = await response.json();
-      studentId = savedStudent?.student?._id || savedStudent?._id;
-      if (!studentId) {
-        alert("❌ Failed to retrieve student ID after saving.");
-        setIsAssigning(false);
-        return;
       }
+
+      await assignToBatch(studentId);
+    } catch (err) {
+      console.error("❌ Save or assign failed:", err);
+      alert("An error occurred while saving student and assigning to batch.");
+    } finally {
+      setIsAssigning(false);
+      onSave && onSave(studentData);
     }
-
-    // Proceed with assigning to batch
-    await assignToBatch(studentId);
-  } catch (err) {
-    console.error("❌ Save or assign failed:", err);
-    alert("An error occurred while saving student and assigning to batch.");
-  } finally {
-    setIsAssigning(false);
-    // FIX: Pass studentData to onSave!
-    onSave && onSave(studentData);
-  }
-};
+  };
 
   return (
     <div className="modal-overlay">
@@ -500,18 +491,35 @@ const handleSubmit = async (e) => {
           <textarea name="signature" placeholder="Signature (base64 or text)" value={formData.signature} onChange={handleChange} />
           
           <div className="modal-actions">
-            {assignmentStatus === 'suggest' && (
+            {assignmentStatus === 'suggested' && (
               <div className="suggestion-box">
-                <p>Suggested Time Slot: <strong>{suggestedSlot}</strong></p>
-                <button type="button" onClick={() => {
-                  setFormData(prev => ({ ...prev, preferredTimeSlot: suggestedSlot }));
-                  setAssignmentStatus('assigned');
-                  alert('✅ Suggested slot accepted. You can now save.');
-                }}>✅ Accept</button>
-                <button type="button" onClick={() => {
-                  alert('Student will be added to waiting list.');
-                  setAssignmentStatus('waitlist');
-                }}>🚫 Reject</button>
+                <p>{suggestionReason}</p>
+                <p>Suggested Slots:</p>
+                <div>
+                  {suggestedSlots.map(slot => (
+                    <button
+                      key={slot}
+                      type="button"
+                      onClick={() => {
+                        setFormData(prev => ({ ...prev, preferredTimeSlot: slot }));
+                        assignToBatch(initialData?._id, slot);
+                      }}
+                      className="suggested-slot-btn"
+                    >
+                      {slot}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    alert('Student will be added to waiting list for admin approval/unpaid.');
+                    setAssignmentStatus('waiting');
+                    assignToBatch(initialData?._id, formData.preferredTimeSlot);
+                  }}
+                >
+                  🚫 Reject All
+                </button>
               </div>
             )}
 
