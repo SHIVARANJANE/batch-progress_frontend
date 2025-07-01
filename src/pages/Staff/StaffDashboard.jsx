@@ -13,6 +13,25 @@ const StaffDashboard = () => {
       .catch(() => setStudents([]));
   }, []);
 
+  // Handler to update attendance in both selectedStudent and students list
+  const handleAttendanceMarked = (date, status) => {
+    axios.patch(`${process.env.REACT_APP_API_BASE_URL}/api/students/${selectedStudent._id}/attendance`, { date, status })
+      .then(res => {
+        // Update selectedStudent
+        const updatedAttendance = { ...selectedStudent.attendance, [date]: status };
+        setSelectedStudent({ ...selectedStudent, attendance: updatedAttendance });
+
+        // Update students list
+        setStudents(students =>
+          students.map(s =>
+            s._id === selectedStudent._id
+              ? { ...s, attendance: updatedAttendance }
+              : s
+          )
+        );
+      });
+  };
+
   return (
     <div>
       <h2>Staff Dashboard</h2>
@@ -45,17 +64,8 @@ const StaffDashboard = () => {
         <StudentAttendanceModal
           student={selectedStudent}
           onClose={() => setSelectedStudent(null)}
-          editable={true} // Pass editable prop for staff
-          onAttendanceMarked={(date, status) => {
-            // Update attendance in backend
-            axios.patch(`${process.env.REACT_APP_API_BASE_URL}/api/students/${selectedStudent._id}/attendance`, { date, status })
-              .then(res => {
-                setSelectedStudent({
-                  ...selectedStudent,
-                  attendance: { ...selectedStudent.attendance, [date]: status }
-                });
-              });
-          }}
+          editable={true}
+          onAttendanceMarked={handleAttendanceMarked}
         />
       )}
     </div>
