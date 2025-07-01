@@ -51,6 +51,8 @@ const generateSlotOptions = (sessionLength) => {
 const StudentFormModal = ({ initialData, onSave, onCancel }) => {
   const [courses, setCourses] = useState([]);
   const [preferredTimeSlots, setPreferredTimeSlots] = useState([]);
+  const [staffList, setStaffList] = useState([]);
+  const [selectedStaffId, setSelectedStaffId] = useState('');
   const [formData, setFormData] = useState({
     name: '', mobile: '', email: '', regDate: '',
     vertical: '', domain: '', category: '',
@@ -69,6 +71,17 @@ const StudentFormModal = ({ initialData, onSave, onCancel }) => {
   const [suggestionReason, setSuggestionReason] = useState('');
   const [isAssigning, setIsAssigning] = useState(false);
 
+  useEffect(() => {
+  if (!formData.courseName) {
+    setStaffList([]);
+    setSelectedStaffId('');
+    return;
+  }
+  fetch(`${process.env.REACT_APP_API_BASE_URL}/api/staff?courseId=${formData.courseName}`)
+    .then(res => res.json())
+    .then(data => setStaffList(data))
+    .catch(() => setStaffList([]));
+}, [formData.courseName]);
   useEffect(() => {
     fetch(`${process.env.REACT_APP_API_BASE_URL}/api/courses`)
       .then(res => res.json())
@@ -283,7 +296,8 @@ const StudentFormModal = ({ initialData, onSave, onCancel }) => {
     e.preventDefault();
     setIsAssigning(true);
     setAssignmentStatus(null);
-
+    const staffId = localStorage.getItem('staffId');
+    console.log("Staff ID:", staffId);
     const studentPayload = { ...formData };
     const enrollment = {
       courseId: formData.courseName,
@@ -303,6 +317,7 @@ const StudentFormModal = ({ initialData, onSave, onCancel }) => {
     const studentData = {
       ...studentPayload,
       enrollment,
+      staffId: selectedStaffId,
     };
 
     try {
@@ -378,6 +393,17 @@ const StudentFormModal = ({ initialData, onSave, onCancel }) => {
                 <option value="">-- Select Course --</option>
                 {courses.map(course => (
                   <option key={course._id} value={course._id}>{course.name}</option>
+                ))}
+              </select>
+              <select
+                name="staffId"
+                value={selectedStaffId}
+                onChange={e => setSelectedStaffId(e.target.value)}
+                required
+              >
+                <option value="">-- Select Staff --</option>
+                {staffList.map(staff => (
+                  <option key={staff._id} value={staff._id}>{staff.name}</option>
                 ))}
               </select>
               <input name="amount" placeholder="Amount" value={formData.amount} onChange={handleChange} />

@@ -32,7 +32,9 @@ const StudentAttendanceModal = ({ student, onClose, editable = false, onAttendan
   const monthName = currentMonth.toLocaleString('default', { month: 'long' });
   const year = currentMonth.getFullYear();
 
-  const startDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay();
+  // Make Monday = 0, Sunday = 6
+const jsDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay();
+const startDay = (jsDay + 6) % 7;
   const totalDays = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate();
 
 const days = Array.from({ length: totalDays }, (_, i) => {

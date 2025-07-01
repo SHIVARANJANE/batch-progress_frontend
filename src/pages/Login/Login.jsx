@@ -66,8 +66,6 @@ function Login() {
       localStorage.setItem('role', role);
       localStorage.setItem('userId', userId);
       localStorage.setItem('staffId', staffId); // 🆕 Add this
-
-      console.log(userId);
       showMessage(res.data.message, 'success');
 
       setTimeout(() => {

@@ -33,7 +33,7 @@ const StaffCompletionView = () => {
   const totalSum = totalCompletions.reduce((a, b) => a + b, 0);
 
   const doughnutData = {
-    labels: data.map(d => d.name),
+    labels: data.map(d => `${d.name} (${d.avgFeedback !== undefined ? `Avg: ${d.avgFeedback}` : 'No Feedback'})`),
     datasets: [{
       label: 'Total Completions',
       data: totalCompletions,
@@ -66,7 +66,8 @@ const StaffCompletionView = () => {
           label: function (context) {
             const value = context.parsed;
             const percentage = ((value / totalSum) * 100).toFixed(1);
-            return `${context.label}: ${value} (${percentage}%)`;
+            const staff = data[context.dataIndex];
+            return `${context.label}: ${value} (${percentage}%) | Avg Feedback: ${staff?.avgFeedback ?? 'N/A'}`;
           }
         }
       }
@@ -75,11 +76,12 @@ const StaffCompletionView = () => {
 
   const csvHeaders = [
     { label: "Staff Name", key: "name" },
+    { label: "Avg Feedback", key: "avgFeedback" },
     ...allMonths.map(month => ({ label: month, key: month }))
   ];
 
   const csvData = data.map(staff => {
-    const row = { name: staff.name };
+    const row = { name: staff.name, avgFeedback: staff.avgFeedback };
     allMonths.forEach(month => {
       row[month] = staff.completions[month] || 0;
     });
@@ -106,6 +108,7 @@ const StaffCompletionView = () => {
         <thead>
           <tr>
             <th>Staff Name</th>
+            <th>Avg Feedback</th>
             {allMonths.map(month => <th key={month}>{month}</th>)}
           </tr>
         </thead>
@@ -113,6 +116,7 @@ const StaffCompletionView = () => {
           {data.map(staff => (
             <tr key={staff.email}>
               <td>{staff.name}</td>
+              <td>{staff.avgFeedback ?? 'N/A'}</td>
               {allMonths.map(month => (
                 <td key={month}>{staff.completions[month] || 0}</td>
               ))}

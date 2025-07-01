@@ -5,6 +5,7 @@ import Login from "./pages/Login/Login";
 import SuperAdminDashboard from "./pages/SuperAdmin/SuperAdminDashboard";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
 import StaffDashboard from "./pages/Staff/StaffDashboard";
+import StudentDashboard from "./pages/Student/StudentDashboard";
 import ForgotPassword from "./pages/Login/ForgotPassword";
 import Courses from "./components/Course/Courses";
 import StaffTab from "./components/Staff/StaffTab";
@@ -27,6 +28,7 @@ function App() {
                     <Route path="/StudentFormModal" element={<StudentFormModal />} />
                     <Route path="/batches" element={<BatchTab />} />
                     <Route path="/StaffDashboard" element={<StaffDashboard />} />
+                    <Route path="/StudentDashboard" element={<StudentDashboard studentId={localStorage.getItem('studentId')} />} />
                     {/* Add other routes here */}
                 </Routes>
             </div>
