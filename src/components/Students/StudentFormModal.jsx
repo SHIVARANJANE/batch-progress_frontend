@@ -53,6 +53,8 @@ const StudentFormModal = ({ initialData, onSave, onCancel }) => {
   const [preferredTimeSlots, setPreferredTimeSlots] = useState([]);
   const [staffList, setStaffList] = useState([]);
   const [selectedStaffId, setSelectedStaffId] = useState('');
+  const role = localStorage.getItem('role');
+  const isAdminOrSuperUser = role === 'admin' || role === 'super_user';
   const [formData, setFormData] = useState({
     name: '', mobile: '', email: '', regDate: '',
     vertical: '', domain: '', category: '',
@@ -114,8 +116,10 @@ const StudentFormModal = ({ initialData, onSave, onCancel }) => {
           : [''],
         breakDates: initialData.breakDates || [],
         feeDetails: cleanFeeDetails.length ? cleanFeeDetails : prev.feeDetails,
-        installments: cleanInstallments.length ? cleanInstallments : prev.installments
+        installments: cleanInstallments.length ? cleanInstallments : prev.installments,
+        staffId: initialData.staffId || '',
       }));
+      setSelectedStaffId(initialData.staffId || '');
     }
   }, [initialData]);
 

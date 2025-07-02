@@ -1,12 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import './WaitingListTab.css'; // Add this for styles
+import './WaitingListTab.css';
 
 const WaitingList = () => {
   const [waitingList, setWaitingList] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState('');
+  const role = localStorage.getItem('role');
+  const isAdminOrSuperUser = role === 'admin' || role === 'super_user';
 
   const fetchWaitingList = async () => {
+    setLoading(true);
+    setErrorMsg('');
     try {
       const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/batch/waiting-list`, {
         headers: {
@@ -15,13 +20,14 @@ const WaitingList = () => {
       });
       setWaitingList(res.data);
     } catch (err) {
-      console.error('Error fetching waiting list:', err);
+      setErrorMsg('Error fetching waiting list');
     } finally {
       setLoading(false);
     }
   };
 
   const handleApprove = async (batchId, studentId) => {
+    setErrorMsg('');
     try {
       await axios.post(
         `${process.env.REACT_APP_API_BASE_URL}/api/batch/${batchId}/approve-waiting/${studentId}`,
@@ -34,12 +40,15 @@ const WaitingList = () => {
       );
       fetchWaitingList();
     } catch (err) {
-      console.error('Approval failed:', err);
-      alert('Approval failed.');
+      // Show backend error (e.g. unpaid student)
+      const msg = err?.response?.data?.message || 'Approval failed.';
+      setErrorMsg(msg);
+      alert(msg);
     }
   };
 
   const handleDisapprove = async (batchId, studentId) => {
+    setErrorMsg('');
     try {
       await axios.post(
         `${process.env.REACT_APP_API_BASE_URL}/api/batch/${batchId}/disapprove-waiting/${studentId}`,
@@ -51,20 +60,24 @@ const WaitingList = () => {
         }
       );
       fetchWaitingList();
+      // Optionally, you can also trigger a refresh of BatchList here if you lift state up
     } catch (err) {
-      console.error('Disapproval failed:', err);
+      setErrorMsg('Disapproval failed.');
       alert('Disapproval failed.');
     }
   };
 
   useEffect(() => {
-    fetchWaitingList();
-  }, []);
+    if (isAdminOrSuperUser) fetchWaitingList();
+    // eslint-disable-next-line
+  }, [isAdminOrSuperUser]);
 
-  if (loading) return <p className="text-center text-gray-500">Loading waiting list...</p>;
+  if (!isAdminOrSuperUser) return null;
+  if (loading) return <div>Loading...</div>;
 
   return (
     <div className="waiting-list-container">
+      {errorMsg && <div className="text-red-600 text-center">{errorMsg}</div>}
       {waitingList.length === 0 ? (
         <div className="text-gray-500 text-center">🎉 No students in the waiting list.</div>
       ) : (

@@ -1,92 +1,76 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import './BatchList.css'; // ⬅️ Add CSS for cute styling
 
 const BatchList = () => {
   const [batches, setBatches] = useState([]);
   const [loading, setLoading] = useState(true);
+  const role = localStorage.getItem('role');
+  const isAdminOrSuperUser = role === 'admin' || role === 'super_user';
+  const isStaff = role === 'staff';
 
-  const fetchBatches = async () => {
-    try {
-      const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/batch`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-      setBatches(res.data);
-    } catch (err) {
-      console.error('Error fetching batches:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    const fetchBatches = async () => {
+      try {
+        let url = `${process.env.REACT_APP_API_BASE_URL}/api/batch`;
+        if (isStaff) url += '?myBatches=1';
+        const res = await axios.get(url, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        });
+        setBatches(res.data);
+      } catch (err) {
+        setBatches([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchBatches();
+  }, [isStaff]);
 
+  // Define the function here
   const markStudentComplete = async (batchId, studentId) => {
     try {
       await axios.post(
         `${process.env.REACT_APP_API_BASE_URL}/api/batch/${batchId}/mark-complete/${studentId}`,
         {},
         {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         }
       );
-      fetchBatches();
+      // Refresh batches after marking complete
+      setLoading(true);
+      let url = `${process.env.REACT_APP_API_BASE_URL}/api/batch`;
+      if (isStaff) url += '?myBatches=1';
+      const res = await axios.get(url, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      setBatches(res.data);
+      setLoading(false);
     } catch (err) {
       alert('Failed to mark student complete.');
     }
   };
 
-  useEffect(() => {
-    fetchBatches();
-  }, []);
-
-  if (loading) return <div className="loading-text">⏳ Loading batches...</div>;
+  if (!isAdminOrSuperUser && !isStaff) return null;
+  if (loading) return <div>Loading...</div>;
 
   return (
-    <div className="batch-list-container">
-      {batches.map((batch) => (
-        <div key={batch._id} className="batch-card">
-          <div className="batch-header">
-            <h3>{batch.courseId?.name || 'Unnamed Course'}</h3>
-            <p><strong>Staff:</strong> {batch.staffId?.name || 'Unassigned'}</p>
-            <p><strong>Slot:</strong> {batch.timeSlot}</p>
-            <p><strong>Frequency:</strong> {batch.frequency}</p>
-            <p><strong>Students:</strong> {batch.studentIds?.length} / {batch.maxStudents}</p>
-          </div>
-
-          <div className="student-table-wrapper">
-            <table className="student-table">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Frequency</th>
-                  <th>Start Date</th>
-                  <th>End Date</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(batch.studentIds || []).map((student) => (
-                  <tr key={student._id}>
-                    <td>{student.name}</td>
-                    <td>{student.frequency}</td>
-                    <td>{student.startDate}</td>
-                    <td>{student.endDate}</td>
-                    <td>
-                      <button
-                        className="complete-btn"
-                        onClick={() => markStudentComplete(batch._id, student._id)}
-                      >
-                        ✅ Mark Complete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+    <div>
+      <h2>Batches</h2>
+      {batches.map(batch => (
+        <div key={batch._id}>
+          <h4>{batch.courseId?.name} ({batch.timeSlot})</h4>
+          <ul>
+            {(batch.studentIds || []).map(student => (
+              <li key={student._id}>
+                {student.name}
+                {isStaff && (
+                  <button onClick={() => markStudentComplete(batch._id, student._id)}>
+                    ✅ Mark Complete
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
         </div>
       ))}
     </div>
