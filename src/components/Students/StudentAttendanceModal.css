@@ -1,88 +1,373 @@
-.calendar-modal {
-  max-width: 800px;
+/* StudentAttendanceModal.css */
+
+/* General Styles */
+body {
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f7fa; /* Light background for the overall page */
 }
 
+/* Modal Overlay */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5); /* Semi-transparent dark overlay */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+/* Main Modal Container */
+.form-modal.calendar-modal {
+    background: linear-gradient(145deg, #ffffff, #f0f8ff); /* Subtle white to light blue gradient */
+    padding: 30px;
+    border-radius: 15px; /* More rounded corners */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15); /* Softer, larger shadow */
+    width: 90%;
+    max-width: 750px; /* Slightly wider */
+    text-align: center;
+    position: relative;
+    overflow-y: auto;
+    max-height: 90vh;
+    border: 1px solid #e0e7ee; /* Light border */
+}
+
+/* Modal Header */
+.calendar-modal h3 {
+    font-size: 2.2em; /* Larger heading */
+    margin-bottom: 15px;
+    color: #2c3e50; /* Dark blue-gray for text */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    font-weight: 700; /* Bolder */
+}
+
+.calendar-modal span {
+    font-size: 1em;
+    color: #6a829a; /* Muted blue-gray */
+    margin-bottom: 25px;
+    display: block;
+}
+
+/* Calendar Controls (Month Navigation) */
 .calendar-controls {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 15px;
-  margin: 10px 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 25px;
+    gap: 20px;
 }
 
 .calendar-controls button {
-  padding: 5px 15px;
-  font-size: 16px;
-  cursor: pointer;
+    background: linear-gradient(180deg, #4a90e2, #357ABD); /* Blue gradient button */
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 10px; /* Rounded buttons */
+    cursor: pointer;
+    font-size: 1.2em;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
+.calendar-controls button:hover {
+    background: linear-gradient(180deg, #357ABD, #4a90e2); /* Invert gradient on hover */
+    transform: translateY(-3px); /* Lift effect */
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+}
+
+.calendar-controls span {
+    font-size: 1.6em; /* Larger month/year display */
+    font-weight: bold;
+    color: #2c3e50;
+    margin: 0;
+}
+
+/* Calendar Grid */
 .calendar-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 6px;
-  margin-top: 10px;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 10px; /* Increased gap */
+    margin-bottom: 30px;
 }
 
 .day-header {
-  font-weight: bold;
-  text-align: center;
-  padding: 6px;
-  background: #e0e0e0;
-  border-radius: 4px;
+    font-weight: bold;
+    color: #4a90e2; /* Blue for headers */
+    padding: 12px 0;
+    background: #eaf2f8; /* Very light blue background */
+    border-radius: 10px;
+    font-size: 1em;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .day-cell {
-  height: 70px;
-  border-radius: 6px;
-  padding: 4px;
-  text-align: center;
-  font-size: 14px;
-  font-weight: bold;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+    background: #fdfefe; /* Almost white */
+    padding: 18px 8px; /* More padding */
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 80px; /* Taller cells */
+    transition: all 0.2s ease;
+    border: 1px solid #e9eff5; /* Subtle border */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05); /* Very light shadow */
 }
 
 .day-cell span {
-  font-size: 16px;
-  margin-bottom: 5px;
+    font-size: 1.3em; /* Larger day number */
+    font-weight: bold;
+    color: #34495e; /* Darker blue-gray */
+    margin-bottom: 8px;
 }
 
-.status-label {
-  font-size: 12px;
+.day-cell .status-label {
+    font-size: 0.85em;
+    padding: 5px 10px;
+    border-radius: 6px;
+    color: white;
+    font-weight: 600;
+    margin-top: 5px;
+    text-transform: capitalize;
 }
 
+/* Status Colors */
 .day-cell.present {
-  background-color: #c9f7c0;
-  color: green;
+    background-color: #e6ffe6; /* Light green */
+    border-color: #a3e6a3;
+}
+
+.day-cell.present .status-label {
+    background-color: #28a745; /* Green */
 }
 
 .day-cell.absent {
-  background-color: #f8c5c5;
-  color: darkred;
+    background-color: #ffe6e6; /* Light red */
+    border-color: #e6a3a3;
+}
+
+.day-cell.absent .status-label {
+    background-color: #dc3545; /* Red */
 }
 
 .day-cell.not-marked {
-  background-color: #f0f0f0;
-  color: #555;
+    background-color: #f0f8ff; /* Light blue */
+    border-color: #a3d9ff;
+}
+
+.day-cell.not-marked .status-label {
+    background-color: #6c757d; /* Gray */
 }
 
 .day-cell.empty {
-  background: none;
+    background: #f8fbfd; /* Very light background for empty cells */
+    border: 1px dashed #e0e7ee; /* Dashed border */
+    box-shadow: none;
 }
 
+/* Future Dates */
+.day-cell.future-date {
+    background-color: #f7f9fb; /* Lighter gray for future dates */
+    color: #aebfd0; /* Muted text color */
+    cursor: not-allowed !important;
+    opacity: 0.8;
+    border-color: #e0e7ee;
+    box-shadow: none;
+}
+
+.day-cell.future-date .status-label {
+    background-color: #c0c0c0; /* Gray */
+}
+
+/* Hover effect for clickable cells */
+.day-cell:not(.empty):not(.future-date):hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    border-color: #b3d9ff; /* Light blue border on hover */
+    cursor: pointer;
+}
+
+
+/* Attendance Summary */
 .attendance-summary {
-  margin-top: 15px;
-  font-size: 16px;
-  text-align: center;
+    background: #eaf2f8; /* Light blue background */
+    padding: 20px;
+    border-radius: 12px;
+    margin-top: 25px;
+    font-size: 1.2em;
+    color: #2c3e50;
+    border: 1px solid #d0e0ed;
+    font-weight: 600;
 }
 
+/* Close Button */
 .close-btn {
-  margin-top: 15px;
-  padding: 8px 20px;
-  background: #444;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
+    background: linear-gradient(180deg, #6c757d, #5a6268); /* Gray gradient */
+    color: white;
+    border: none;
+    padding: 14px 30px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 1.15em;
+    margin-top: 35px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.close-btn:hover {
+    background: linear-gradient(180deg, #5a6268, #6c757d);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Attendance Dialog (for marking) */
+.attendance-dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1001;
+}
+
+.attendance-dialog > div {
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+    text-align: center;
+    max-width: 450px;
+    width: 90%;
+    border: 1px solid #e0e7ee;
+}
+
+.attendance-dialog p {
+    margin-bottom: 25px;
+    font-size: 1.2em;
+    color: #34495e;
+    font-weight: 500;
+}
+
+.attendance-dialog button {
+    background: linear-gradient(180deg, #4a90e2, #357ABD);
+    color: white;
+    border: none;
+    padding: 12px 22px;
+    border-radius: 8px;
+    cursor: pointer;
+    margin: 8px; /* More spacing */
+    font-size: 1.05em;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+}
+
+.attendance-dialog button:hover {
+    background: linear-gradient(180deg, #357ABD, #4a90e2);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 12px rgba(0, 0, 0, 0.15);
+}
+
+.attendance-dialog button:nth-of-type(2) { /* Absent button */
+    background: linear-gradient(180deg, #e74c3c, #c0392b); /* Red gradient */
+}
+
+.attendance-dialog button:nth-of-type(2):hover {
+    background: linear-gradient(180deg, #c0392b, #e74c3c);
+}
+
+.attendance-dialog button:nth-of-type(3) { /* Clear button */
+    background: linear-gradient(180deg, #f39c12, #e67e22); /* Orange gradient */
+    color: white;
+}
+
+.attendance-dialog button:nth-of-type(3):hover {
+    background: linear-gradient(180deg, #e67e22, #f39c12);
+}
+
+.attendance-dialog button:nth-of-type(4) { /* Cancel button */
+    background: linear-gradient(180deg, #95a5a6, #7f8c8d); /* Gray gradient */
+}
+
+.attendance-dialog button:nth-of-type(4):hover {
+    background: linear-gradient(180deg, #7f8c8d, #95a5a6);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .form-modal.calendar-modal {
+        padding: 20px;
+        max-width: 95%;
+    }
+
+    .calendar-grid {
+        gap: 8px;
+    }
+
+    .day-cell {
+        min-height: 70px;
+        padding: 12px 5px;
+    }
+
+    .day-cell span {
+        font-size: 1.1em;
+    }
+
+    .day-cell .status-label {
+        font-size: 0.75em;
+        padding: 4px 8px;
+    }
+
+    .calendar-controls button {
+        padding: 8px 15px;
+        font-size: 1.1em;
+    }
+
+    .calendar-controls span {
+        font-size: 1.4em;
+    }
+}
+
+@media (max-width: 480px) {
+    .form-modal.calendar-modal {
+        padding: 15px;
+    }
+
+    .calendar-grid {
+        gap: 5px;
+    }
+
+    .day-cell {
+        min-height: 60px;
+        padding: 10px 3px;
+    }
+
+    .day-cell span {
+        font-size: 1em;
+    }
+
+    .day-cell .status-label {
+        font-size: 0.7em;
+        padding: 3px 6px;
+    }
+
+    .attendance-dialog button {
+        padding: 10px 18px;
+        font-size: 0.95em;
+        margin: 5px;
+    }
 }

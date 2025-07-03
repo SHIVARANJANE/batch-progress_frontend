@@ -24,7 +24,7 @@ function Login() {
     try {
       const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/auth/user-role?email=${email}`);
       const userRole = res.data.role;
-      const userEmail = res.data.email;
+      // const userEmail = res.data.email; // This line is not used and can be removed
       setRole(userRole);
 
       if (userRole === 'student') {
@@ -60,19 +60,27 @@ function Login() {
         email,
         otp
       });
-      const { token, role,userId ,staffId} = res.data;
+      const { token, role, userId, staffId, studentId } = res.data; // Destructure studentId here
       localStorage.setItem('token', token);
       localStorage.setItem('email', email);
       localStorage.setItem('role', role);
       localStorage.setItem('userId', userId);
-      localStorage.setItem('staffId', staffId); // 🆕 Add this
+      
+      // Conditionally save staffId or studentId based on role
+      if (role === 'staff' && staffId) {
+        localStorage.setItem('staffId', staffId);
+      } else if (role === 'student' && studentId) { // Add this condition for studentId
+        localStorage.setItem('studentId', studentId);
+      }
+      
       showMessage(res.data.message, 'success');
 
       setTimeout(() => {
         if (role === 'super_user') navigate('/SuperAdminDashboard');
         else if (role === 'admin') navigate('/AdminDashboard');
         else if (role === 'staff') navigate('/StaffDashboard');
-        else navigate('/StudentDashboard');
+        else if (role === 'student') navigate('/StudentDashboard'); // Ensure student navigates to StudentDashboard
+        else navigate('/'); // Fallback for unknown roles or initial state
       }, 1000);
     } catch (error) {
       showMessage(error.response?.data?.message || "OTP verification failed", 'error');
@@ -92,58 +100,58 @@ function Login() {
         )}
 
         {step === 'email' && (
-  <>
-    <div className="input-with-icon">
-      <span>📧</span>
-      <input
-        type="email"
-        placeholder="Enter your email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        required
-      />
-    </div>
-    <button onClick={handleEmailSubmit}>Next</button>
-  </>
-)}
+          <>
+            <div className="input-with-icon">
+              <span>📧</span>
+              <input
+                type="email"
+                placeholder="Enter your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+            <button onClick={handleEmailSubmit}>Next</button>
+          </>
+        )}
 
-{step === 'password' && (
-  <>
-    <div className="input-with-icon">
-      <span>🔒</span>
-      <input
-        type="password"
-        placeholder="Enter your password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        required
-      />
-    </div>
-    <p>
-      <a onClick={() => navigate('/forgot-password')} style={{ cursor: 'pointer' }}>
-        Forgot Password?
-      </a>
-    </p>
-    <button onClick={handleLogin}>Login</button>
-  </>
-)}
+        {step === 'password' && (
+          <>
+            <div className="input-with-icon">
+              <span>🔒</span>
+              <input
+                type="password"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+            <p>
+              <a onClick={() => navigate('/forgot-password')} style={{ cursor: 'pointer' }}>
+                Forgot Password?
+              </a>
+            </p>
+            <button onClick={handleLogin}>Login</button>
+          </>
+        )}
 
-{step === 'otp' && otpSent && (
-  <>
-    <h3>Enter OTP</h3>
-    <div className="input-with-icon">
-      <span>🔢</span>
-      <input
-        type="text"
-        placeholder="OTP"
-        value={otp}
-        onChange={(e) => setOtp(e.target.value)}
-        required
-      />
-    </div>
-    <button onClick={handleVerify}>Verify OTP</button>
-  </>
-)}
+        {step === 'otp' && otpSent && (
+          <>
+            <h3>Enter OTP</h3>
+            <div className="input-with-icon">
+              <span>🔢</span>
+              <input
+                type="text"
+                placeholder="OTP"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                required
+              />
+            </div>
+            <button onClick={handleVerify}>Verify OTP</button>
+          </>
+        )}
 
       </div>
     </div>
