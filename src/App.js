@@ -10,7 +10,7 @@ import ForgotPassword from "./pages/Login/ForgotPassword";
 import Courses from "./components/Course/Courses";
 import StaffTab from "./components/Staff/StaffTab";
 import Students from "./components/Students/Students";
-import BatchTab from "./components/Batch/BatchTab";
+import BatchList from "./components/Batches/BatchList";
 import StudentFormModal from "./components/Students/StudentFormModal";
 function App() {
     return (
@@ -26,7 +26,7 @@ function App() {
                     <Route path="/students" element={<Students />} />
                     <Route path="/AdminDashboard" element={<AdminDashboard />} />
                     <Route path="/StudentFormModal" element={<StudentFormModal />} />
-                    <Route path="/batches" element={<BatchTab />} />
+                    <Route path="/batches" element={<BatchList isAdminView={true} />} />
                     <Route path="/StaffDashboard" element={<StaffDashboard />} />
                     <Route path="/StudentDashboard" element={<StudentDashboard studentId={localStorage.getItem('studentId')} />} />
                     {/* Add other routes here */}

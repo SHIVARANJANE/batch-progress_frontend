@@ -1,7 +1,9 @@
+// SuperAdminDashboard.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './SuperAdminDashboard.css'; // Assuming you have a CSS file for styling
+import './SuperAdminDashboard.css';
 import {FaBell, FaUserCircle} from 'react-icons/fa';
+
 function SuperAdminDashboard() {
     const navigate =useNavigate();
     const[showNotifications,setNotifications]=useState(false);
@@ -11,7 +13,6 @@ function SuperAdminDashboard() {
         "Batch B is delayed",
         "new course added: Course C"
     ];
-    
 
     return(
         <div className="dashboard-container">
@@ -55,6 +56,7 @@ function SuperAdminDashboard() {
         <div className='dashboard-section' onClick={() => navigate('/students')}>
             <span>Students</span><span className="arrow">→</span>
         </div>
+        {/* New Batch Section */}
         <div className='dashboard-section' onClick={() => navigate('/batches')}>
             <span>Batches</span><span className="arrow">→</span>
         </div>

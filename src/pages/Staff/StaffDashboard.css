@@ -1,0 +1,93 @@
+/* src/components/Staff/StaffDashboard.css */
+.staff-dashboard-container {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.staff-dashboard-container h2 {
+  text-align: center;
+  color: #333;
+  margin-bottom: 30px;
+}
+
+.tabs-navigation {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #ddd;
+}
+
+.tabs-navigation button {
+  background-color: #f0f0f0;
+  border: none;
+  padding: 12px 25px;
+  cursor: pointer;
+  font-size: 1.1em;
+  font-weight: bold;
+  color: #555;
+  transition: background-color 0.3s, color 0.3s;
+  border-radius: 8px 8px 0 0;
+  margin: 0 5px;
+}
+
+.tabs-navigation button.active-tab {
+  background-color: #007bff;
+  color: white;
+  border-bottom: 2px solid #007bff;
+}
+
+.tabs-navigation button:hover:not(.active-tab) {
+  background-color: #e2e6ea;
+}
+
+.tab-content {
+  background-color: #ffffff;
+  padding: 25px;
+  border-radius: 0 0 8px 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  min-height: 300px; /* Ensure content area has some height */
+}
+
+.tab-content h3 {
+  color: #333;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.attendance-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.attendance-table th,
+.attendance-table td {
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: left;
+}
+
+.attendance-table th {
+  background-color: #f2f2f2;
+  font-weight: bold;
+  color: #333;
+}
+
+.attendance-table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.attendance-table button {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.attendance-table button:hover {
+  background-color: #218838;
+}

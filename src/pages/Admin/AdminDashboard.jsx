@@ -1,13 +1,15 @@
+// AdminDashboard.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaBell, FaUserCircle } from 'react-icons/fa';
-import StaffTab from '../../components/Staff/StaffTab'; // ✅ import the StaffTab component
+import StaffTab from '../../components/Staff/StaffTab'; // Assuming this path is correct
+import BatchList from '../../components/Batches/BatchList'; // <--- ADD THIS LINE
 
 function AdminDashboard() {
     const navigate = useNavigate();
     const [showNotifications, setNotifications] = useState(false);
     const [showProfile, setShowProfile] = useState(false);
-    const [viewing, setViewing] = useState('dashboard'); // 'dashboard' or 'staff'
+    const [viewing, setViewing] = useState('dashboard'); // 'dashboard', 'staff', 'batches'
 
     const notifications = [
         "3 students enrolled in Course A",
@@ -61,7 +63,8 @@ function AdminDashboard() {
                     <div className='dashboard-section' onClick={() => navigate('/students')}>
                         <span>Students</span><span className="arrow">→</span>
                     </div>
-                    <div className='dashboard-section' onClick={() => navigate('/batches')}>
+                    {/* New Batch Section */}
+                    <div className='dashboard-section' onClick={() => setViewing('batches')}> {/* Changed navigate to setViewing here */}
                         <span>Batches</span><span className="arrow">→</span>
                     </div>
                 </>
@@ -71,6 +74,15 @@ function AdminDashboard() {
                 <div>
                     <button className="back-button" onClick={() => setViewing('dashboard')}>← Back to Dashboard</button>
                     <StaffTab isAdminView={true} />
+                </div>
+            )}
+
+            {/* New Batches View */}
+            {viewing === 'batches' && (
+                <div>
+                    <button className="back-button" onClick={() => setViewing('dashboard')}>← Back to Dashboard</button>
+                    {/* Render BatchList for admin view */}
+                    <BatchList isAdminView={true} />
                 </div>
             )}
         </div>
