@@ -1,132 +1,236 @@
-import React, { useState, useEffect } from 'react';
+// StudentFormModal.jsx
+import React, { useState, useEffect, useCallback } from 'react';
 import DatePicker from "react-multi-date-picker";
 import './StudentFormModal.css';
+import axios from 'axios';
 
-const TIME_SLOTS = [
-  '10:30-11:30', '11:30-12:30', '02:00-03:00',
-  '03:00-04:00', '04:00-05:00', '05:00-06:00',
-  '06:00-07:00', '07:00-08:00'
-];
-
+// Helper for parsing time slots (already present)
 const parseTime = timeStr => {
-  const [h, m] = timeStr.split(':').map(Number);
+  let [h, m] = timeStr.split(':').map(Number);
+  if (h < 10 && h !== 0) {
+    h += 12; // Convert 2 PM to 14, 3 PM to 15, etc.
+  }
   return h + m / 60;
 };
 
-const generateSlotOptions = (sessionLength) => {
-  const parsedSlots = TIME_SLOTS.map(slot => {
-    const [start, end] = slot.split('-');
-    return {
-      label: slot,
-      start: parseTime(start),
-      end: parseTime(end),
-    };
+
+// Helper for generating combined time slot options (already present)
+const generateSlotOptions = (sessionLength, staffAvailability, selectedStaffWorkingDays) => {
+  if (!staffAvailability || !selectedStaffWorkingDays || selectedStaffWorkingDays.length === 0) {
+    return [];
+  }
+
+
+  const allAvailableSlots = new Set();
+  selectedStaffWorkingDays.forEach(day => {
+    const slotsForDay = staffAvailability[day.toLowerCase()];
+    if (slotsForDay) {
+      slotsForDay.forEach(slot => allAvailableSlots.add(slot));
+    }
   });
+    const uniqueSortedSlots = Array.from(allAvailableSlots).sort((a, b) => parseTime(a.split('-')[0]) - parseTime(b.split('-')[0]));
 
   const result = [];
-  for (let i = 0; i < parsedSlots.length; i++) {
-    let duration = 0;
-    let label = parsedSlots[i].label;
-    let start = parsedSlots[i].start;
-    let end = parsedSlots[i].end;
 
-    duration = end - start;
+  for (let i = 0; i < uniqueSortedSlots.length; i++) {
+    let currentSpanStartParsed = parseTime(uniqueSortedSlots[i].split('-')[0]);
+    let currentSpanEndParsed = parseTime(uniqueSortedSlots[i].split('-')[1]);
+    let currentDuration = currentSpanEndParsed - currentSpanStartParsed;
+    let currentLabel = uniqueSortedSlots[i];
 
+    // Try to extend this slot contiguously
     let j = i;
-    while (duration < sessionLength && j + 1 < parsedSlots.length) {
-      j++;
-      end = parsedSlots[j].end;
-      label = `${parsedSlots[i].label.split('-')[0]}-${parsedSlots[j].label.split('-')[1]}`;
-      duration = end - start;
+    while (currentDuration < sessionLength && j + 1 < uniqueSortedSlots.length) {
+      const nextSlotStartParsed = parseTime(uniqueSortedSlots[j + 1].split('-')[0]);
+      const nextSlotEndParsed = parseTime(uniqueSortedSlots[j + 1].split('-')[1]);
+
+      // IMPORTANT: Check for contiguity
+      // The start of the next slot must exactly match the end of the current span
+      if (nextSlotStartParsed === currentSpanEndParsed) {
+        currentSpanEndParsed = nextSlotEndParsed; // Extend the end of the combined span
+        currentDuration = currentSpanEndParsed - currentSpanStartParsed; // Recalculate total duration
+        // Update label to reflect the new, extended span
+        currentLabel = `${uniqueSortedSlots[i].split('-')[0]}-${uniqueSortedSlots[j + 1].split('-')[1]}`;
+        j++; // Move to the next slot in the uniqueSortedSlots array
+      } else {
+        // If not contiguous, break the inner loop as we can't combine further
+        break;
+      }
     }
 
-    if (duration >= sessionLength && (end - start) % 0.5 === 0) {
-      result.push(label);
+    // After potentially combining slots, check if the total duration meets sessionLength
+    // and if the end time aligns with a 30-minute boundary.
+    if (currentDuration >= sessionLength && (currentSpanEndParsed * 60) % 30 === 0) {
+      result.push(currentLabel);
     }
   }
 
+  // Use Set to ensure unique labels (in case different combinations yield same label)
   return [...new Set(result)];
 };
 
+  
 const StudentFormModal = ({ initialData, onSave, onCancel }) => {
   const [courses, setCourses] = useState([]);
-  const [preferredTimeSlots, setPreferredTimeSlots] = useState([]);
   const [staffList, setStaffList] = useState([]);
   const [selectedStaffId, setSelectedStaffId] = useState('');
-  const role = localStorage.getItem('role');
-  const isAdminOrSuperUser = role === 'admin' || role === 'super_user';
-  const [formData, setFormData] = useState({
-    name: '', mobile: '', email: '', regDate: '',
-    vertical: '', domain: '', category: '',
-    courseType: 'Individual', courseName: '',
-    comboCourses: [''], amount: '',
-    frequency: '', duration: '', sessionLength: 1,
-    startDate: '', endDate: '',
-    signature: '', breakDates: [],
-    paymentMode: 'Single',
-    feeDetails: [{ sno: 1, date: '', receiptNo: '', amount: '', balance: '', status: '' }],
-    installments: [{ sno: 1, dueDate: '', amount: '', status: '' }],
-    preferredTimeSlot: ''
-  });
+  const [selectedStaffDetails, setSelectedStaffDetails] = useState(null);
+  const [verticalOptions, setVerticalOptions] = useState([]);
+  const [domainOptions, setDomainOptions] = useState([]);
+  const [categoryOptions, setCategoryOptions] = useState([]);
   const [assignmentStatus, setAssignmentStatus] = useState(null);
   const [suggestedSlots, setSuggestedSlots] = useState([]);
   const [suggestionReason, setSuggestionReason] = useState('');
   const [isAssigning, setIsAssigning] = useState(false);
+  const [errors, setErrors] = useState({});
+  const role = localStorage.getItem('role');
+  const isAdminOrSuperUser = role === 'admin' || role === 'super_user';
 
-  useEffect(() => {
-  if (!formData.courseName) {
-    setStaffList([]);
-    setSelectedStaffId('');
-    return;
+  const [formData, setFormData] = useState({
+    name: '', mobile: '', email: '', regDate: '',
+    vertical: '', domain: '', category: '',
+    courseType: 'Individual', courseName: '', comboCourses: [''],
+    amount: '', frequency: '', duration: '', sessionLength: 1,
+    startDate: '', endDate: '', breakDates: [],
+    paymentMode: 'Single',
+    feeDetails: [{ sno: 1, date: '', receiptNo: '', amount: '', balance: '', status: '' }],
+    installments: [{ sno: 1, dueDate: '', amount: '', status: '' }],
+    preferredTimeSlot: '', preferredFrequency: '', preferredDuration: '',
+    staffId: ''
+  });
+
+// ✅ Load initial data and set both formData.staffId AND selectedStaffId
+useEffect(() => {
+  if (initialData) {
+    console.log('🟡 Loaded initialData:', initialData);
+
+    const cleanFeeDetails = (initialData.feeDetails || []).map(det => ({
+      ...det,
+      date: det.date && !isNaN(new Date(det.date)) ? new Date(det.date).toISOString().split('T')[0] : ''
+    }));
+    const cleanInstallments = (initialData.installments || []).map(ins => ({
+      ...ins,
+      dueDate: ins.dueDate && !isNaN(new Date(ins.dueDate)) ? new Date(ins.dueDate).toISOString().split('T')[0] : ''
+    }));
+
+    const updated = {
+      ...initialData,
+      courseName: initialData.courseType === 'Individual' && initialData.enrollmentId?.courseId?._id
+        ? initialData.enrollmentId.courseId._id
+        : initialData.enrollmentId?.courseName || '',
+      regDate: initialData.regDate ? new Date(initialData.regDate).toISOString().split('T')[0] : '',
+      startDate: initialData.enrollmentId?.startDate ? new Date(initialData.enrollmentId.startDate).toISOString().split('T')[0] : '',
+      endDate: initialData.enrollmentId?.endDate ? new Date(initialData.enrollmentId.endDate).toISOString().split('T')[0] : '',
+      amount: initialData.enrollmentId?.amount || '',
+      duration: initialData.enrollmentId?.duration || '',
+      // MODIFICATION START
+      // Prioritize student's own fields, then enrollment's if available
+      frequency: initialData.preferredFrequency || initialData.enrollmentId?.frequency || '', // Use preferredFrequency first
+      sessionLength: initialData.sessionLength || initialData.enrollmentId?.sessionLength || 1, // Use sessionLength first
+      // MODIFICATION END
+      paymentMode: initialData.enrollmentId?.paymentMode || 'Single',
+      feeDetails: cleanFeeDetails,
+      installments: cleanInstallments,
+      staffId: initialData.staffId?._id || '', 
+      preferredTimeSlot: initialData.preferredTimeSlot || '', 
+      preferredFrequency: initialData.preferredFrequency || '', 
+      preferredDuration: initialData.preferredDuration || '', 
+      breakDates: (initialData.breakDates || []).map(dateStr => {
+        const timestamp = parseInt(dateStr, 10);
+        return isNaN(timestamp) ? null : new Date(timestamp);
+      }).filter(Boolean),
+    };
+    
+    setFormData(prev => ({ ...prev, ...updated }));
+    
+    // Set selectedStaffId to match the staffId from initialData
+    if (initialData.staffId && initialData.staffId._id) {
+      setSelectedStaffId(initialData.staffId._id); 
+    } else if (typeof initialData.staffId === 'string') {
+      setSelectedStaffId(initialData.staffId); 
+    }
   }
-  fetch(`${process.env.REACT_APP_API_BASE_URL}/api/staff?courseId=${formData.courseName}`)
-    .then(res => res.json())
-    .then(data => setStaffList(data))
-    .catch(() => setStaffList([]));
-}, [formData.courseName]);
+}, [initialData]);
+
+// ✅ Sync selectedStaffDetails when selectedStaffId changes and staffList is available
+// This is the SINGLE SOURCE OF TRUTH for selectedStaffDetails
+useEffect(() => {
+  if (selectedStaffId && staffList.length > 0) {
+    const staff = staffList.find(s => s._id === selectedStaffId);
+    if (staff) {
+      setSelectedStaffDetails(staff);
+      
+      // Only populate frequency if form doesn't already have a value from initialData
+      // This is to ensure that if a preferred frequency is not already set in formData
+      // (e.g., for a new student, or if initialData didn't have it),
+      // it defaults to the staff's frequency.
+      // If formData.preferredFrequency is already set from initialData, we keep it.
+      if (!formData.preferredFrequency) { 
+        setFormData(prev => ({
+          ...prev,
+          preferredFrequency: staff.frequency,
+        }));
+      }
+    } else {
+      // If selectedStaffId is set but not found in staffList (e.g., staff list not fully loaded yet or invalid ID)
+      setSelectedStaffDetails(null); 
+    }
+  } else {
+    // If selectedStaffId is empty or staffList is empty
+    setSelectedStaffDetails(null);
+  }
+}, [selectedStaffId, staffList, formData.preferredFrequency]); // Added formData.preferredFrequency as a dependency for completeness
+
+  // Fetch all courses to populate course dropdown, and extract vertical, domain, category options
   useEffect(() => {
-    fetch(`${process.env.REACT_APP_API_BASE_URL}/api/courses`)
-      .then(res => res.json())
-      .then(data => setCourses(data))
-      .catch(err => console.error('Failed to fetch courses', err));
+    const fetchCourses = async () => {
+      try {
+        const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/courses`);
+        setCourses(res.data);
+
+        const uniqueVerticals = [...new Set(res.data.map(c => c.vertical))];
+        const uniqueDomains = [...new Set(res.data.map(c => c.domain))];
+        const uniqueCategories = [...new Set(res.data.map(c => c.category))];
+
+        setVerticalOptions(uniqueVerticals);
+        setDomainOptions(uniqueDomains);
+        setCategoryOptions(uniqueCategories);
+      } catch (err) {
+        console.error('Failed to fetch courses:', err);
+      }
+    };
+    fetchCourses();
   }, []);
 
   useEffect(() => {
-    if (initialData) {
-      const cleanFeeDetails = (initialData.feeDetails || []).map((fd, i) => ({
-        ...fd,
-        date: fd.date && !isNaN(new Date(fd.date)) ? new Date(fd.date).toISOString().split('T')[0] : '',
-      }));
-      const cleanInstallments = (initialData.installments || []).map(ins => ({
-        ...ins,
-        dueDate: ins.dueDate && !isNaN(new Date(ins.dueDate)) ? new Date(ins.dueDate).toISOString().split('T')[0] : ''
-      }));
-
-      setFormData(prev => ({
-        ...prev,
-        ...initialData,
-        courseName: initialData.courseType === 'Individual'
-          ? initialData.courseName?._id || initialData.courseName || ''
-          : '',
-        regDate: initialData.regDate ? new Date(initialData.regDate).toISOString().split('T')[0] : '',
-        startDate: initialData.startDate ? new Date(initialData.startDate).toISOString().split('T')[0] : '',
-        endDate: initialData.endDate ? new Date(initialData.endDate).toISOString().split('T')[0] : '',
-        comboCourses: Array.isArray(initialData.comboCourses) && initialData.comboCourses.length
-          ? initialData.comboCourses
-          : [''],
-        breakDates: initialData.breakDates || [],
-        feeDetails: cleanFeeDetails.length ? cleanFeeDetails : prev.feeDetails,
-        installments: cleanInstallments.length ? cleanInstallments : prev.installments,
-        staffId: initialData.staffId || '',
-      }));
-      setSelectedStaffId(initialData.staffId || '');
+    if (!formData.courseName) {
+      setStaffList([]);
+      // Do NOT clear selectedStaffId or selectedStaffDetails here directly.
+      // Let the other useEffect handle selectedStaffDetails based on selectedStaffId and staffList.
+      return;
     }
-  }, [initialData]);
 
+    const fetchStaffByCourse = async () => {
+      try {
+        const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/staff/by-course?courseId=${formData.courseName}`);
+        setStaffList(res.data);
+        // REMOVED: Redundant setSelectedStaffDetails call here.
+        // The other useEffect ([selectedStaffId, staffList]) will handle this.
+      } catch (err) {
+        console.error('Failed to fetch staff by course:', err);
+        setStaffList([]);
+        // Do NOT clear selectedStaffDetails here directly.
+      }
+    };
+    fetchStaffByCourse();
+  }, [formData.courseName, initialData]); // initialData is a dependency to ensure refetch if student changes
+
+
+  // Effect to calculate end date whenever relevant fields change
   useEffect(() => {
-    const { duration, frequency, startDate, breakDates, sessionLength } = formData;
+    const { duration, preferredFrequency, startDate, breakDates, sessionLength } = formData;
 
-    if (!duration || !frequency || !startDate || !sessionLength) return;
+    if (!duration || !preferredFrequency || !startDate || !sessionLength) return;
 
     const totalHours = parseFloat(duration);
     const hoursPerSession = parseFloat(sessionLength);
@@ -135,7 +239,7 @@ const StudentFormModal = ({ initialData, onSave, onCancel }) => {
     const totalSessions = Math.ceil(totalHours / hoursPerSession);
 
     let allowedDays = [1];
-    switch (frequency.toLowerCase()) {
+    switch (preferredFrequency.toLowerCase()) {
       case 'daily': allowedDays = [1, 2, 3, 4, 5, 6]; break;
       case 'alternate days': allowedDays = [1, 3, 5]; break;
       case 'weekend': allowedDays = [0, 6]; break;
@@ -145,18 +249,23 @@ const StudentFormModal = ({ initialData, onSave, onCancel }) => {
 
     const start = new Date(startDate);
     const breakSet = new Set(
-      (breakDates || [])
-        .map(d => {
-          try {
-            const jsDate = d instanceof Date ? d : d?.toDate?.();
-            return jsDate && !isNaN(jsDate) ? jsDate.toISOString().split('T')[0] : null;
-          } catch {
-            return null;
-          }
-        })
-        .filter(Boolean)
-    );
+  (breakDates || [])
+    .map(d => {
+      let jsDate = null;
+      if (d instanceof Date) {
+        jsDate = d; // Already a JS Date object
+      } else if (typeof d === 'object' && d?.toDate) {
+        jsDate = d.toDate(); // DatePicker object
+      } else if (typeof d === 'string' || typeof d === 'number') {
+        // Attempt to parse as timestamp or date string
+        const timestamp = parseInt(d, 10);
+        jsDate = !isNaN(timestamp) ? new Date(timestamp) : new Date(d); // Try both timestamp and date string
+      }
 
+      return jsDate && !isNaN(jsDate) ? jsDate.toISOString().split('T')[0] : null;
+    })
+    .filter(Boolean)
+);
     let sessionsDone = 0;
     let current = new Date(start);
     while (sessionsDone < totalSessions) {
@@ -170,38 +279,84 @@ const StudentFormModal = ({ initialData, onSave, onCancel }) => {
     setFormData(prev => ({ ...prev, endDate: current.toISOString().split('T')[0] }));
   }, [
     formData.duration,
-    formData.frequency,
+    formData.preferredFrequency,
     formData.startDate,
     formData.breakDates,
     formData.sessionLength
   ]);
 
-  useEffect(() => {
-    const length = parseFloat(formData.sessionLength);
-    if (!isNaN(length) && length > 0) {
-      setPreferredTimeSlots(generateSlotOptions(length));
-    }
-  }, [formData.sessionLength]);
 
-  const handleChange = (e) => {
+  const handleChange = async (e) => {
     const { name, value } = e.target;
+    let newErrors = { ...errors };
+
+    if (name === 'mobile') {
+      if (value.length > 10 || !/^\d*$/.test(value)) {
+        newErrors.mobile = 'Mobile number must be 10 digits and contain only numbers.';
+      } else {
+        delete newErrors.mobile;
+      }
+    } else if (name === 'regDate') {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const selectedDate = new Date(value);
+      selectedDate.setHours(0, 0, 0, 0);
+      if (selectedDate < today) {
+        newErrors.regDate = 'Registration date cannot be in the past.';
+      } else {
+        delete newErrors.regDate;
+      }
+    } else if (name === 'startDate') {
+      const regDate = new Date(formData.regDate);
+      regDate.setHours(0, 0, 0, 0);
+      const selectedStartDate = new Date(value);
+      selectedStartDate.setHours(0, 0, 0, 0);
+      if (selectedStartDate < regDate) {
+        newErrors.startDate = 'Start date cannot be before registration date.';
+      } else {
+        delete newErrors.startDate;
+      }
+    } else if (name === 'courseName') {
+  const selectedCourse = courses.find(c => c._id === value);
+  if (selectedCourse) {
+    setFormData(prev => ({
+      ...prev,
+      duration: selectedCourse.duration, // ✅ Just store numeric
+      vertical: selectedCourse.vertical,
+      domain: selectedCourse.domain,
+      category: selectedCourse.category,
+    }));
+
+      } else {
+        setFormData(prev => ({
+          ...prev,
+          duration: '',
+          vertical: '',
+          domain: '',
+          category: '',
+        }));
+      }
+    } else if (name === 'staffId') {
+      console.log('🟡 Staff ID changed:', value);
+      setSelectedStaffId(value);
+    // If the user deselects the staff, THEN we clear the dependent fields
+    if (!value) {
+      setFormData(prev => ({
+        ...prev,
+        preferredTimeSlot: '',
+        preferredFrequency: '',
+        sessionLength: 1 // Reset to default
+      }));
+    }
+    }
+
     setFormData(prev => ({ ...prev, [name]: value }));
+    setErrors(newErrors);
   };
 
-  const handleComboChange = (index, value) => {
-    const updated = [...formData.comboCourses];
-    updated[index] = value;
-    setFormData(prev => ({ ...prev, comboCourses: updated }));
-  };
-
-  const addComboCourse = () => {
-    setFormData(prev => ({ ...prev, comboCourses: [...prev.comboCourses, ''] }));
-  };
-
-  const updateFeeDetail = (index, field, value) => {
+  const handleFeeDetailChange = (index, field, value) => {
     const updated = [...formData.feeDetails];
     updated[index][field] = value;
-
     if (field === 'amount') {
       const entered = parseFloat(value) || 0;
       const total = parseFloat(formData.amount) || 0;
@@ -216,301 +371,355 @@ const StudentFormModal = ({ initialData, onSave, onCancel }) => {
         updated[index].status = 'Partial';
       }
     }
-
     setFormData(prev => ({ ...prev, feeDetails: updated }));
   };
 
   const addFeeDetailRow = () => {
-    setFormData(prev => ({
-      ...prev,
-      feeDetails: [...prev.feeDetails, { sno: prev.feeDetails.length + 1, date: '', receiptNo: '', amount: '', balance: '', status: '' }]
-    }));
+    setFormData(prev => ({ ...prev, feeDetails: [...prev.feeDetails, { sno: prev.feeDetails.length + 1, date: '', receiptNo: '', amount: '', balance: '', status: '' }] }));
   };
 
-  const updateInstallment = (index, field, value) => {
+  const handleInstallmentChange = (index, field, value) => {
     const updated = [...formData.installments];
     updated[index][field] = value;
-
-    if (field === 'amount') {
-      const entered = parseFloat(value) || 0;
-      const total = parseFloat(formData.amount) || 0;
-      if (entered === total) {
-        updated[index].status = 'Paid';
-      } else if (entered === 0) {
-        updated[index].status = 'Pending';
-      } else {
-        updated[index].status = 'Partial';
-      }
-    }
-
     setFormData(prev => ({ ...prev, installments: updated }));
   };
 
   const addInstallmentRow = () => {
-    setFormData(prev => ({
-      ...prev,
-      installments: [...prev.installments, { sno: prev.installments.length + 1, dueDate: '', amount: '', status: '' }]
-    }));
+    setFormData(prev => ({ ...prev, installments: [...prev.installments, { sno: prev.installments.length + 1, dueDate: '', amount: '', status: 'Unpaid' }] }));
   };
 
-  const assignToBatch = async (studentId, selectedSlot = null) => {
-    setIsAssigning(true);
-    setAssignmentStatus(null);
-
-    try {
-      const token = localStorage.getItem('token');
-      const body = { studentId };
-      if (selectedSlot) body.preferredTimeSlot = selectedSlot;
-
-      const res = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/batch/assign`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(body),
-      });
-
-      const result = await res.json();
-
-      if (result.status === 'waiting') {
-        alert('Student added to waiting list (unpaid).');
-        setAssignmentStatus('waiting');
-      } else if (result.status === 'admin_approval') {
-        alert('Student added to waiting list for admin approval.');
-        setAssignmentStatus('admin_approval');
-      } else if (result.status === 'suggested') {
-        setSuggestedSlots(result.suggestedSlots || []);
-        setAssignmentStatus('suggested');
-        setSuggestionReason(result.reason || '');
-      } else {
-        alert(result.message || 'Batch assignment failed.');
-        setAssignmentStatus('error');
-      }
-    } catch (err) {
-      console.error('❌ Batch assignment failed', err);
-      alert('❌ Batch assignment failed. Please try again.');
-      setAssignmentStatus('error');
-    } finally {
-      setIsAssigning(false);
-    }
+  const assignToBatch = async (studentId, timeSlot = null) => {
+    // This function's logic needs to be aligned with your backend batch assignment.
+    // The current implementation is a placeholder.
+    alert(`Attempting to assign student ${studentId} to a batch for slot ${timeSlot || formData.preferredTimeSlot}`);
+    // In a real scenario, this would make an API call to a batch assignment endpoint.
+    setAssignmentStatus('assigned'); // Simulate success for now
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    setIsAssigning(true);
-    setAssignmentStatus(null);
-    const staffId = localStorage.getItem('staffId');
-    console.log("Staff ID:", staffId);
-    const studentPayload = { ...formData };
-    const enrollment = {
-      courseId: formData.courseName,
+
+    if (Object.keys(errors).length > 0) {
+      alert('Please fix the errors in the form.');
+      return;
+    }
+
+    // Prepare enrollment data
+    const enrollmentPayload = {
+      courseId: formData.courseName, 
       courseType: formData.courseType,
+      courseName: formData.courseType === 'Individual' ? courses.find(c => c._id === formData.courseName)?.name : formData.courseName, 
       comboCourses: formData.comboCourses,
-      amount: formData.amount,
-      frequency: formData.frequency,
-      duration: formData.duration,
-      sessionLength: formData.sessionLength,
+      amount: parseFloat(formData.amount),
+      frequency: formData.preferredFrequency, 
+      duration: formData.duration, 
+      sessionLength: parseInt(formData.sessionLength), 
       startDate: formData.startDate,
-      endDate: formData.endDate,
+      endDate: formData.endDate, 
       paymentMode: formData.paymentMode,
       feeDetails: formData.feeDetails,
       installments: formData.paymentMode === 'Installment' ? formData.installments : []
     };
 
-    const studentData = {
-      ...studentPayload,
-      enrollment,
+    const studentPayload = {
+      name: formData.name,
+      email: formData.email,
+      mobile: formData.mobile,
+      regDate: formData.regDate,
+      vertical: formData.vertical,
+      domain: formData.domain,
+      category: formData.category,
+      preferredTimeSlot: formData.preferredTimeSlot,
+      preferredFrequency: formData.preferredFrequency,
+      preferredDuration: formData.preferredDuration,
+      breakDates: formData.breakDates,
       staffId: selectedStaffId,
+      enrollment: enrollmentPayload 
     };
 
-    try {
-      let studentId = null;
-      let response, savedStudent;
-
-      if (initialData && initialData._id) {
-        response = await fetch(
-          `${process.env.REACT_APP_API_BASE_URL}/api/students/${initialData._id}`,
-          {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(studentData),
-          }
-        );
-        savedStudent = await response.json();
-        if (!response.ok) {
-          alert(savedStudent.error || "❌ Failed to update student.");
-          setIsAssigning(false);
-          return;
-        }
-        studentId = initialData._id;
-      } else {
-        response = await fetch(
-          `${process.env.REACT_APP_API_BASE_URL}/api/students`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(studentData),
-          }
-        );
-        savedStudent = await response.json();
-        studentId = savedStudent?.student?._id || savedStudent?._id;
-        if (!studentId) {
-          alert("❌ Failed to retrieve student ID after saving.");
-          setIsAssigning(false);
-          return;
-        }
-      }
-
-      await assignToBatch(studentId);
-    } catch (err) {
-      console.error("❌ Save or assign failed:", err);
-      alert("An error occurred while saving student and assigning to batch.");
-    } finally {
-      setIsAssigning(false);
-      onSave && onSave(studentData);
-    }
+    onSave(studentPayload);
   };
+
+  const getSessionLengthOptions = () => {
+    if (!selectedStaffDetails || !selectedStaffDetails.maxHoursPerDay) return [];
+    const options = [];
+    for (let i = 1; i <= selectedStaffDetails.maxHoursPerDay; i++) {
+      options.push(i);
+    }
+    return options;
+  };
+
+  const getPreferredFrequencyOptions = () => {
+    if (!selectedStaffDetails) return [];
+
+    const staffFrequency = selectedStaffDetails.frequency;
+    const staffWorkingDays = selectedStaffDetails.workingDays || [];
+    const options = [];
+
+    // Base options always available
+    options.push('Daily'); 
+    options.push('Alternate Days'); 
+
+    if (staffWorkingDays.includes('saturday') || staffWorkingDays.includes('sunday')) {
+      options.push('Weekend');
+    }
+    if (staffWorkingDays.includes('only sunday')) { 
+        options.push('Only Sunday');
+    }
+    if (staffWorkingDays.includes('only saturday')) { 
+        options.push('Only Saturday');
+    }
+
+    // Refine based on staff's specific frequency setting
+    switch (staffFrequency) {
+      case 'daily':
+        break;
+      case 'alternatedays':
+        options.length = 0; 
+        options.push('Alternate Days');
+        break;
+      case 'weekend':
+        options.length = 0;
+        options.push('Weekend');
+        if (staffWorkingDays.includes('saturday')) options.push('Only Saturday');
+        if (staffWorkingDays.includes('sunday')) options.push('Only Sunday');
+        break;
+      case 'only sunday':
+        options.length = 0;
+        options.push('Only Sunday');
+        break;
+      default:
+        break;
+    }
+    return [...new Set(options)]; 
+  };
+
 
   return (
     <div className="modal-overlay">
-      <div className="form-modal">
-        <h3>{initialData ? '✏️ Edit Student' : '➕ Add Student'}</h3>
+      <div className="modal-content">
+        <h3>{initialData ? 'Edit Student' : 'Add New Student'}</h3>
         <form onSubmit={handleSubmit}>
-          <input name="name" placeholder="Full Name" value={formData.name} onChange={handleChange} required />
-          <input name="mobile" placeholder="Mobile" value={formData.mobile} onChange={handleChange} required />
-          <input name="email" placeholder="Email" value={formData.email} onChange={handleChange} required />
-          <input name="regDate" type="date" value={formData.regDate} onChange={handleChange} required />
+          <div className="form-row">
+            <div className="form-group">
+              <label>Student Name</label>
+              <input type="text" name="name" value={formData.name} onChange={handleChange} required />
+            </div>
+            <div className="form-group">
+              <label>Phone Number</label>
+              <input type="text" name="mobile" value={formData.mobile} onChange={handleChange} required maxLength="10" />
+              {errors.mobile && <span className="error">{errors.mobile}</span>}
+            </div>
+            <div className="form-group">
+              <label>Email</label>
+              <input type="email" name="email" value={formData.email} onChange={handleChange} required />
+            </div>
+            <div className="form-group">
+              <label>Registration Date:</label>
+              <DatePicker
+                value={formData.regDate}
+                onChange={(date) => {
+                  let formattedDate = '';
+                  if (date) {
+                    const d = date.toDate(); 
+                    const year = d.getFullYear();
+                    const month = String(d.getMonth() + 1).padStart(2, '0');
+                    const day = String(d.getDate()).padStart(2, '0');
+                    formattedDate = `${year}-${month}-${day}`;
+                  }
+                  handleChange({ target: { name: 'regDate', value: formattedDate } });
+                }}
+                format="YYYY-MM-DD"
+                minDate={new Date()}
+              />
+              {errors.regDate && <span className="error">{errors.regDate}</span>}
+            </div>
+          </div>
 
-          <input name="vertical" placeholder="Vertical" value={formData.vertical} onChange={handleChange} />
-          <input name="domain" placeholder="Domain" value={formData.domain} onChange={handleChange} />
-          <input name="category" placeholder="Category" value={formData.category} onChange={handleChange} />
-
-          <select name="courseType" value={formData.courseType} onChange={handleChange}>
-            <option value="Individual">Individual</option>
-            <option value="Combo">Combo</option>
-          </select>
-
-          {formData.courseType === 'Individual' && (
-            <>
-              <select name="courseName" value={formData.courseName} onChange={handleChange} required>
-                <option value="">-- Select Course --</option>
-                {courses.map(course => (
-                  <option key={course._id} value={course._id}>{course.name}</option>
-                ))}
+          <div className="form-row">
+            <div className="form-group">
+              <label>Vertical</label>
+              <select name="vertical" value={formData.vertical} onChange={handleChange} required>
+                <option value="">Select Vertical</option>
+                {verticalOptions.map(option => <option key={option} value={option}>{option}</option>)}
               </select>
-              <select
-                name="staffId"
-                value={selectedStaffId}
-                onChange={e => setSelectedStaffId(e.target.value)}
-                required
-              >
-                <option value="">-- Select Staff --</option>
+            </div>
+            <div className="form-group">
+              <label>Domain</label>
+              <select name="domain" value={formData.domain} onChange={handleChange} required>
+                <option value="">Select Domain</option>
+                {domainOptions.map(option => <option key={option} value={option}>{option}</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Category</label>
+              <select name="category" value={formData.category} onChange={handleChange} required>
+                <option value="">Select Category</option>
+                {categoryOptions.map(option => <option key={option} value={option}>{option}</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Course Type</label>
+              <select name="courseType" value={formData.courseType} onChange={handleChange} required>
+                <option value="Individual">Individual</option>
+                <option value="Combo">Combo</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>Course Name(s)</label>
+              {formData.courseType === 'Individual' ? (
+                <select name="courseName" value={formData.courseName} onChange={handleChange} required>
+                  <option value="">Select Course</option>
+                  {courses.filter(c => c.courseType === 'Individual').map(course => (
+                    <option key={course._id} value={course._id}>{course.name}</option>
+                  ))}
+                </select>
+              ) : (
+                <select name="comboCourses" multiple value={formData.comboCourses} onChange={(e) => {
+                  const options = [...e.target.selectedOptions].map(option => option.value);
+                  setFormData(prev => ({ ...prev, comboCourses: options }));
+                }} required>
+                  <option value="">Select Combo Courses</option>
+                  {courses.filter(c => c.courseType === 'Individual').map(course => (
+                    <option key={course._id} value={course.name}>{course.name}</option>
+                  ))}
+                </select>
+              )}
+            </div>
+            <div className="form-group">
+              <label>Total Duration</label>
+              <input type="text" name="duration" value={formData.duration} readOnly /> 
+            </div>
+            <div className="form-group">
+              <label>Staff Name</label>
+              <select name="staffId" value={selectedStaffId} onChange={handleChange} required>
+                <option value="">Select Staff</option>
                 {staffList.map(staff => (
                   <option key={staff._id} value={staff._id}>{staff.name}</option>
                 ))}
               </select>
-              <input name="amount" placeholder="Amount" value={formData.amount} onChange={handleChange} />
-              <input name="frequency" placeholder="Frequency" value={formData.frequency} onChange={handleChange} />
-              <input name="duration" placeholder="Total Duration (Hours)" value={formData.duration} onChange={handleChange} />
-              <input name="sessionLength" type="number" step="0.25" min="0.25" placeholder="Session Length (hrs)" value={formData.sessionLength} onChange={handleChange} />
-              <select
-                name="preferredTimeSlot"
-                value={formData.preferredTimeSlot}
-                onChange={handleChange}
-                required
-              >
-                <option value="">-- Select Preferred Time Slot --</option>
-                {preferredTimeSlots.map((slot, i) => (
-                  <option key={i} value={slot}>{slot}</option>
-                ))}
+            </div>
+            <div className="form-group">
+              <label>Payment Type</label>
+              <select name="paymentMode" value={formData.paymentMode} onChange={handleChange}>
+                <option value="Single">Single</option>
+                <option value="Installment">Installment</option>
               </select>
-            </>
-          )}
+            </div>
+          </div>
 
-          {formData.courseType === 'Combo' && (
-            <>
-              {formData.comboCourses.map((course, idx) => (
-                <input
-                  key={idx}
-                  placeholder={`Combo Course ${idx + 1}`}
-                  value={course}
-                  onChange={(e) => handleComboChange(idx, e.target.value)}
-                />
-              ))}
-              <button type="button" onClick={addComboCourse}>➕ Add Course</button>
-            </>
-          )}
-
-          <select name="paymentMode" value={formData.paymentMode} onChange={handleChange}>
-            <option value="Single">Single</option>
-            <option value="Installment">Installment</option>
-          </select>
-
+          {/* Fee Details / Installments */}
           {formData.paymentMode === 'Single' && (
             <div className="fee-table">
               <h4>💰 Fee Details</h4>
               <table>
                 <thead>
-                  <tr><th>S.NO</th><th>Date</th><th>Rec No.</th><th>Amount</th><th>Balance</th><th>Status</th></tr>
+                  <tr><th>S.NO</th><th>Date</th><th>Rec No.</th><th>Amount</th><th>Balance</th><th>Status</th><th>Actions</th></tr>
                 </thead>
                 <tbody>
-                  {formData.feeDetails.map((row, i) => (
-                    <tr key={i}>
+                  {formData.feeDetails.map((row, index) => (
+                    <tr key={index}>
                       <td>{row.sno}</td>
-                      <td><input type="date" value={row.date} onChange={(e) => updateFeeDetail(i, 'date', e.target.value)} /></td>
-                      <td><input value={row.receiptNo} onChange={(e) => updateFeeDetail(i, 'receiptNo', e.target.value)} /></td>
-                      <td><input value={row.amount} onChange={(e) => updateFeeDetail(i, 'amount', e.target.value)} /></td>
-                      <td><input value={row.balance} readOnly /></td>
+                      <td><input type="date" value={row.date} onChange={(e) => handleFeeDetailChange(index, 'date', e.target.value)} /></td>
+                      <td><input type="text" value={row.receiptNo} onChange={(e) => handleFeeDetailChange(index, 'receiptNo', e.target.value)} /></td>
+                      <td><input type="number" value={row.amount} onChange={(e) => handleFeeDetailChange(index, 'amount', e.target.value)} /></td>
+                      <td><input type="number" value={row.balance} readOnly /></td>
+                      <td><input type="text" value={row.status} readOnly /></td>
                       <td>
-                        <select value={row.status} onChange={(e) => updateFeeDetail(i, 'status', e.target.value)}>
-                          <option value="">-- Select --</option>
-                          <option value="Paid">Paid</option>
-                          <option value="Unpaid">Unpaid</option>
-                          <option value="Partial">Partial</option>
-                        </select>
+                        {/* Remove button if needed */}
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-              <button type="button" onClick={addFeeDetailRow}>➕ Add Row</button>
+              <button type="button" onClick={addFeeDetailRow}>+ Add Fee Detail</button>
             </div>
           )}
 
           {formData.paymentMode === 'Installment' && (
-            <div className="installment-table">
-              <h4>📅 Installment Schedule</h4>
+            <div className="fee-table">
+              <h4>💸 Installments</h4>
               <table>
                 <thead>
-                  <tr><th>S.NO</th><th>Due Date</th><th>Amount</th><th>Status</th></tr>
+                  <tr><th>S.NO</th><th>Due Date</th><th>Amount</th><th>Status</th><th>Actions</th></tr>
                 </thead>
                 <tbody>
-                  {formData.installments.map((row, i) => (
-                    <tr key={i}>
+                  {formData.installments.map((row, index) => (
+                    <tr key={index}>
                       <td>{row.sno}</td>
-                      <td><input type="date" value={row.dueDate} onChange={(e) => updateInstallment(i, 'dueDate', e.target.value)} /></td>
-                      <td><input value={row.amount} onChange={(e) => updateInstallment(i, 'amount', e.target.value)} /></td>
+                      <td><input type="date" value={row.dueDate} onChange={(e) => handleInstallmentChange(index, 'dueDate', e.target.value)} /></td>
+                      <td><input type="number" value={row.amount} onChange={(e) => handleInstallmentChange(index, 'amount', e.target.value)} /></td>
+                      <td><input type="text" value={row.status} onChange={(e) => handleInstallmentChange(index, 'status', e.target.value)} /></td>
                       <td>
-                        <select value={row.status} onChange={(e) => updateInstallment(i, 'status', e.target.value)}>
-                          <option value="">-- Select --</option>
-                          <option value="Pending">Pending</option>
-                          <option value="Paid">Paid</option>
-                          <option value="Partial">Partial</option>
-                        </select>
+                        {/* Remove button if needed */}
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-              <button type="button" onClick={addInstallmentRow}>➕ Add Row</button>
+              <button type="button" onClick={addInstallmentRow}>+ Add Installment</button>
             </div>
           )}
 
-          <input name="startDate" type="date" value={formData.startDate} onChange={handleChange} />
-          <input name="endDate" type="date" value={formData.endDate} readOnly />
+          <div className="form-row">
+            <div className="form-group">
+              <label>Session Length</label>
+              <select name="sessionLength" value={formData.sessionLength} onChange={handleChange} required disabled={!selectedStaffDetails}>
+                {getSessionLengthOptions().map(len => (
+                  <option key={len} value={len}>{len}</option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Preferred Frequency</label>
+              <select name="preferredFrequency" value={formData.preferredFrequency} onChange={handleChange} required disabled={!selectedStaffDetails}>
+                <option value="">Select Frequency</option>
+                {getPreferredFrequencyOptions().map(freq => (
+                  <option key={freq} value={freq}>{freq}</option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Preferred Time Slot</label>
+              <select name="preferredTimeSlot" value={formData.preferredTimeSlot} onChange={handleChange} required disabled={!selectedStaffDetails || !formData.sessionLength}>
+                <option value="">Select Time Slot</option>
+                {generateSlotOptions(formData.sessionLength, selectedStaffDetails?.availability, selectedStaffDetails?.workingDays).map(slot => (
+                  <option key={slot} value={slot}>{slot}</option>
+                ))}
+              </select>
+            </div>
+          </div>
 
-          <label>Break Dates (Optional):</label>
+          <div className="form-row">
+            <div className="form-group">
+              <label>Start Date</label>
+              <DatePicker
+                value={formData.startDate}
+                onChange={(date) => {
+                  let formattedDate = '';
+                  if (date) {
+                    const d = date.toDate(); 
+                    const year = d.getFullYear();
+                    const month = String(d.getMonth() + 1).padStart(2, '0');
+                    const day = String(d.getDate()).padStart(2, '0');
+                    formattedDate = `${year}-${month}-${day}`;
+                  }
+                  handleChange({
+                    target: {
+                      name: 'startDate',
+                      value: formattedDate 
+                    }
+                  });
+                }}
+                format="YYYY-MM-DD"
+                inputProps={{ readOnly: true }}
+              />
+              {errors.startDate && <span className="error">{errors.startDate}</span>}
+            </div>
+                 <label>Break Dates (Optional):</label>
           <DatePicker
             multiple
             value={formData.breakDates}
@@ -518,13 +727,17 @@ const StudentFormModal = ({ initialData, onSave, onCancel }) => {
             format="YYYY-MM-DD"
           />
 
-          <textarea name="signature" placeholder="Signature (base64 or text)" value={formData.signature} onChange={handleChange} />
-          
-          <div className="modal-actions">
-            {assignmentStatus === 'suggested' && (
-              <div className="suggestion-box">
+            <div className="form-group">
+              <label>End Date</label>
+              <input name="endDate" type="date" value={formData.endDate} readOnly />
+
+            </div>
+          </div>
+
+          <div className="form-actions">
+            {assignmentStatus === 'pending_approval' && (
+              <div className="assignment-suggestions">
                 <p>{suggestionReason}</p>
-                <p>Suggested Slots:</p>
                 <div>
                   {suggestedSlots.map(slot => (
                     <button
@@ -558,7 +771,7 @@ const StudentFormModal = ({ initialData, onSave, onCancel }) => {
                 🚀 Assign to Batch
               </button>
             )}
-            <button type="submit">💾 Save</button>
+            <button type="submit" disabled={Object.keys(errors).length > 0}>💾 Save</button>
             <button type="button" onClick={onCancel}>❌ Cancel</button>
           </div>
         </form>

@@ -48,7 +48,8 @@ function StaffTab({ isAdminView = false }) {
       const res = await axios.get(
         `${process.env.REACT_APP_API_BASE_URL}/api/staff/staff-occupancy/${staff._id}?view=availability`
       );
-      setAvailabilityData(res.data.occupancy || []);
+      // Corrected line: Access res.data directly, as it contains the occupancy array
+      setAvailabilityData(res.data || []);
       setViewAvailability(staff);
     } catch (err) {
       console.error('Failed to fetch occupancy:', err);

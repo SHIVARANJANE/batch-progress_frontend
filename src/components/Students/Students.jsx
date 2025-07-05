@@ -1,3 +1,4 @@
+// Students.jsx
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import StudentsTable from './StudentsTable';
@@ -26,95 +27,67 @@ const Students = () => {
     fetchStudents();
   }, []);
 
- const handleSave = async (studentData) => {
-  try {
-    // Split top-level and enrollment fields
-    const {
-      name, email, mobile, regDate, vertical, domain, category,
-      signature, breakDates, preferredFrequency, preferredDuration, preferredTimeSlot,
-      courseType, courseName, comboCourses, amount, frequency, duration, sessionLength,
-      startDate, endDate, paymentMode, feeDetails, installments
-    } = studentData;
+  const handleSave = async (studentData) => {
+    try {
+      // Split top-level and enrollment fields
+      const {
+        name, email, mobile, regDate, vertical, domain, category,
+        preferredFrequency, preferredDuration, preferredTimeSlot,
+        breakDates, staffId, // `signature` removed
+        enrollment // Enrollment object
+      } = studentData;
 
-    // Compose payload as backend expects
-    const payload = {
-      name, email, mobile, regDate, vertical, domain, category,
-      signature, breakDates, preferredFrequency, preferredDuration, preferredTimeSlot,
-      enrollment: {
-        courseId: courseName,
-        courseType,
-        comboCourses,
-        amount,
-        frequency,
-        duration,
-        sessionLength,
-        startDate,
-        endDate,
-        paymentMode,
-        feeDetails,
-        installments: paymentMode === 'Installment' ? installments : []
+      const payload = {
+        name, email, mobile, regDate, vertical, domain, category,
+        preferredFrequency, preferredDuration, preferredTimeSlot,
+        breakDates, staffId,
+        enrollment // Pass the entire enrollment object
+      };
+
+      if (editingStudent) {
+        await axios.put(`${process.env.REACT_APP_API_BASE_URL}/api/students/${editingStudent._id}`, payload);
+      } else {
+        await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/students`, payload);
       }
-    };
-
-    if (editingStudent?._id) {
-      await axios.put(`${process.env.REACT_APP_API_BASE_URL}/api/students/${editingStudent._id}`, payload);
       setShowForm(false);
       setEditingStudent(null);
-      fetchStudents();
-      return { success: true };
-    } else {
-      const res = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/students`, payload);
-      setShowForm(false);
-      setEditingStudent(null);
-      fetchStudents();
-      return res.data;
+      fetchStudents(); // Refresh the list
+    } catch (err) {
+      console.error('Failed to save student:', err.response?.data?.error || err.message);
+      alert(`Failed to save student: ${err.response?.data?.error || err.message}`);
     }
-  } catch (err) {
-    console.error('Failed to save student:', err?.response?.data || err);
-    alert('❌ Failed to save student.');
-    throw err;
-  }
-};
+  };
 
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this student?')) {
       try {
         await axios.delete(`${process.env.REACT_APP_API_BASE_URL}/api/students/${id}`);
-        fetchStudents();
+        fetchStudents(); // Refresh the list
       } catch (err) {
         console.error('Failed to delete student:', err);
+        alert('Failed to delete student.');
       }
     }
   };
 
   const handleEdit = (student) => {
-    const enrollment = student.enrollmentId || {};
+    // Populate form with existing student and enrollment data
+    const enrollment = student.enrollmentId;
     const initialData = {
-      _id: student._id,
-      name: student.name || '',
-      email: student.email || '',
-      mobile: student.mobile || '',
-      regDate: student.regDate || '',
-      vertical: student.vertical || '',
-      domain: student.domain || '',
-      category: student.category || '',
-      signature: student.signature || '',
-      breakDates: student.breakDates || [],
-      preferredFrequency: student.preferredFrequency || '',
-      preferredDuration: student.preferredDuration || '',
-      preferredTimeSlot: student.preferredTimeSlot || '',
-      courseType: enrollment.courseType || 'Individual',
-      courseName: enrollment.courseId || enrollment.courseName || '',
-      comboCourses: enrollment.comboCourses || [''],
-      amount: enrollment.amount || '',
-      frequency: enrollment.frequency || '',
-      duration: enrollment.duration || '',
-      sessionLength: enrollment.sessionLength || 1,
-      startDate: enrollment.startDate?.split('T')[0] || '',
-      endDate: enrollment.endDate?.split('T')[0] || '',
-      paymentMode: enrollment.feeMode || 'Single',
-      feeDetails: enrollment.feeDetails?.length ? enrollment.feeDetails : [{ sno: 1, date: '', receiptNo: '', amount: '', balance: '', status: '' }],
-      installments: enrollment.installments?.length ? enrollment.installments : [{ sno: 1, dueDate: '', amount: '', status: '' }]
+      ...student,
+      // Ensure courseName for individual courses is the ID if it's an object
+      courseName: student.courseType === 'Individual' && enrollment?.courseId?._id ? enrollment.courseId._id : enrollment?.courseName || '',
+      courseType: enrollment?.courseType || 'Individual',
+      comboCourses: enrollment?.comboCourses || [],
+      amount: enrollment?.amount || '',
+      frequency: enrollment?.frequency || '',
+      duration: enrollment?.duration || '',
+      sessionLength: enrollment?.sessionLength || 1,
+      startDate: enrollment?.startDate?.split('T')[0] || '',
+      endDate: enrollment?.endDate?.split('T')[0] || '',
+      paymentMode: enrollment?.paymentMode || 'Single',
+      feeDetails: enrollment?.feeDetails?.length ? enrollment.feeDetails : [{ sno: 1, date: '', receiptNo: '', amount: '', balance: '', status: '' }],
+      installments: enrollment?.installments?.length ? enrollment.installments : [{ sno: 1, dueDate: '', amount: '', status: '' }]
     };
 
     setEditingStudent(initialData);
