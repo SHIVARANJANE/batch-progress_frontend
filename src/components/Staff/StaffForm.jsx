@@ -10,6 +10,9 @@ const TIME_SLOTS = [
 
 const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
+// Define the frequency options
+const FREQUENCY_OPTIONS = ['daily', 'alternatedays', 'weekend', 'only sunday'];
+
 const StaffForm = ({ onClose, onSubmit, staff }) => {
   const [form, setForm] = useState({
     name: '',
@@ -25,7 +28,9 @@ const StaffForm = ({ onClose, onSubmit, staff }) => {
     expertise: '',
     maxHoursPerDay: 8,
     workingDays: [],
-    availability: {}
+    availability: {},
+    // NEW FIELD: frequency
+    frequency: 'daily' // Set a default frequency
   });
 
   const [courseOptions, setCourseOptions] = useState([]);
@@ -45,7 +50,9 @@ const StaffForm = ({ onClose, onSubmit, staff }) => {
         workingDays: staff.workingDays || [],
         availability: staff.availability || {},
         isAdmin: !!staff.isAdmin,
-        staffType: staff.staffType || 'Full-time'
+        staffType: staff.staffType || 'Full-time',
+        // Set frequency from existing staff data, or default if not present
+        frequency: staff.frequency || 'daily'
       });
     }
   }, [staff]);
@@ -136,6 +143,16 @@ const StaffForm = ({ onClose, onSubmit, staff }) => {
           <select name="staffType" value={form.staffType} onChange={handleChange}>
             <option value="Full-time">Full-time</option>
             <option value="Part-time">Part-time</option>
+          </select>
+
+          {/* NEW FIELD: Frequency */}
+          <label>Frequency</label>
+          <select name="frequency" value={form.frequency} onChange={handleChange}>
+            {FREQUENCY_OPTIONS.map(option => (
+              <option key={option} value={option}>
+                {option.charAt(0).toUpperCase() + option.slice(1).replace('days', ' Days')}
+              </option>
+            ))}
           </select>
 
           <label>Max Hours Per Day</label>
