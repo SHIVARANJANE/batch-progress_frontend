@@ -69,28 +69,26 @@ const generateSlotOptions = (sessionLength, staffAvailability, selectedStaffWork
 
 // Helper function to check payment status
 const isPaymentPaidOrPartial = (enrollment) => {
-    if (!enrollment || (!enrollment.feeDetails && !enrollment.installments)) {
-        return false;
-    }
+  if (!enrollment || (!enrollment.feeDetails && !enrollment.installments)) {
+    return false;
+  }
 
-    // Check feeDetails if present
-    if (enrollment.feeDetails && enrollment.feeDetails.length > 0) {
-        const hasPaid = enrollment.feeDetails.some(detail => detail.status === 'Paid');
-        const hasPartial = enrollment.feeDetails.some(detail => detail.status === 'Partial');
-        // Consider 'Partial' if at least one installment is paid or overall status is partial
-        const allUnpaid = enrollment.feeDetails.every(detail => detail.status === 'Unpaid');
-        return hasPaid || hasPartial || !allUnpaid;
-    }
+  // Check feeDetails if present
+  if (enrollment.feeDetails && enrollment.feeDetails.length > 0) {
+    const hasPaid = enrollment.feeDetails.some(detail => detail.status === 'Paid');
+    const hasPartial = enrollment.feeDetails.some(detail => detail.status === 'Partial');
+    const allUnpaid = enrollment.feeDetails.every(detail => detail.status === 'Unpaid');
+    return hasPaid || hasPartial || !allUnpaid;
+  }
 
-    // Check installments if feeDetails not present or empty
-    if (enrollment.installments && enrollment.installments.length > 0) {
-        const hasPaidInstallment = enrollment.installments.some(inst => inst.status === 'Paid' || inst.status === 'Partial');
-        return hasPaidInstallment;
-    }
+  // Check installments if feeDetails not present or empty
+  if (enrollment.installments && enrollment.installments.length > 0) {
+    const hasPaidInstallment = enrollment.installments.some(inst => inst.status === 'Paid'); // Check only for 'Paid' installments
+    return hasPaidInstallment;
+  }
 
-    return false; // Default to false if no payment details
+  return false; // Default to false if no payment details
 };
-
 // Basic Popup Component (Can be styled further with CSS)
 const PopupComponent = ({ type, message, onClose }) => {
     let backgroundColor = '';
@@ -194,7 +192,7 @@ const StudentFormModal = ({ initialData, onSave, onCancel }) => {
     startDate: '', endDate: '', breakDates: [],
     paymentMode: 'Single',
     feeDetails: [{ sno: 1, date: '', receiptNo: '', amount: '', balance: '', status: '' }],
-    installments: [{ sno: 1, dueDate: '', amount: '', status: '' }],
+    installments: [{ sno: 1, dueDate: '', amount: '', balance: '', status: 'Unpaid' }],
     preferredTimeSlot: '', preferredFrequency: '', preferredDuration: '',
     staffId: ''
   });
@@ -491,14 +489,87 @@ useEffect(() => {
     setFormData(prev => ({ ...prev, feeDetails: [...prev.feeDetails, { sno: prev.feeDetails.length + 1, date: '', receiptNo: '', amount: '', balance: '', status: '' }] }));
   };
 
-  const handleInstallmentChange = (index, field, value) => {
-    const updated = [...formData.installments];
-    updated[index][field] = value;
-    setFormData(prev => ({ ...prev, installments: updated }));
+   const handleInstallmentChange = (index, field, value) => {
+    const updatedInstallments = [...formData.installments];
+    updatedInstallments[index][field] = value;
+
+    // Calculate balance and set next installment amount if current installment is paid
+    if (field === 'status') {
+      if (value === 'Paid') {
+        const paidAmount = parseFloat(updatedInstallments[index].amount) || 0;
+        const totalCourseAmount = parseFloat(formData.amount) || 0;
+        let remainingBalance = totalCourseAmount;
+
+        // Sum up paid amounts from previous installments including current
+        for (let i = 0; i <= index; i++) {
+          if (updatedInstallments[i].status === 'Paid') {
+            remainingBalance -= (parseFloat(updatedInstallments[i].amount) || 0);
+          }
+        }
+        updatedInstallments[index].balance = remainingBalance > 0 ? remainingBalance : 0;
+
+        // Set the amount for the next installment
+        if (index + 1 < updatedInstallments.length) {
+          updatedInstallments[index + 1].amount = remainingBalance > 0 ? remainingBalance : 0;
+          updatedInstallments[index + 1].balance = 0; // Reset balance for next installment
+          updatedInstallments[index + 1].status = 'Unpaid'; // Reset status for next installment
+        }
+      } else {
+        // If status is not Paid, clear balance for current installment
+        updatedInstallments[index].balance = '';
+      }
+    } else if (field === 'amount') {
+      // If amount changes, status might implicitly become 'Unpaid' or 'Partial' based on UI logic/backend.
+      // For now, only handle balance logic when status is 'Paid'
+      const enteredAmount = parseFloat(value) || 0;
+      const totalCourseAmount = parseFloat(formData.amount) || 0;
+      let currentTotalPaid = 0;
+      for (let i = 0; i < index; i++) {
+        if (updatedInstallments[i].status === 'Paid') {
+          currentTotalPaid += (parseFloat(updatedInstallments[i].amount) || 0);
+        }
+      }
+      const remainingBalanceBeforeCurrent = totalCourseAmount - currentTotalPaid;
+      updatedInstallments[index].balance = remainingBalanceBeforeCurrent - enteredAmount;
+
+      if (updatedInstallments[index].balance <= 0) {
+        updatedInstallments[index].status = 'Paid';
+        updatedInstallments[index].balance = 0;
+      } else if (enteredAmount > 0) {
+        updatedInstallments[index].status = 'Partial';
+      } else {
+        updatedInstallments[index].status = 'Unpaid';
+      }
+
+      // Propagate balance to the next installment's amount
+      if (index + 1 < updatedInstallments.length) {
+        const nextAmount = updatedInstallments[index].balance;
+        if (nextAmount !== undefined && nextAmount !== null && nextAmount >= 0) {
+          updatedInstallments[index + 1].amount = nextAmount;
+          updatedInstallments[index + 1].balance = 0; // Reset balance for next installment
+          updatedInstallments[index + 1].status = 'Unpaid'; // Reset status for next installment
+        }
+      }
+    }
+
+
+    setFormData(prev => ({ ...prev, installments: updatedInstallments }));
   };
 
   const addInstallmentRow = () => {
-    setFormData(prev => ({ ...prev, installments: [...prev.installments, { sno: prev.installments.length + 1, dueDate: '', amount: '', status: 'Unpaid' }] }));
+    setFormData(prev => ({
+      ...prev,
+      installments: [
+        ...prev.installments,
+        {
+          sno: prev.installments.length + 1,
+          dueDate: '',
+          amount: prev.installments.length > 0 ? prev.installments[prev.installments.length - 1].balance : '', // Set amount of new row to balance of previous
+          balance: '',
+          status: 'Unpaid'
+        }
+      ]
+    }));
   };
 const handleComboCourseChange = (index, courseId) => {
     const updatedComboCourses = [...formData.comboCourses];
@@ -644,7 +715,7 @@ const handleComboCourseChange = (index, courseId) => {
 
     onSave(studentPayload);
   };
-
+   const showAssignToBatchButton = formData.paymentMode === 'Installment' && isPaymentPaidOrPartial(formData) && isAdminOrSuperUser;
   const getSessionLengthOptions = () => {
     if (!selectedStaffDetails || !selectedStaffDetails.maxHoursPerDay) return [];
     const options = [];
@@ -883,29 +954,38 @@ const handleComboCourseChange = (index, courseId) => {
           )}
 
           {formData.paymentMode === 'Installment' && (
-            <div className="fee-table">
-              <h4>💸 Installments</h4>
-              <table>
-                <thead>
-                  <tr><th>S.NO</th><th>Due Date</th><th>Amount</th><th>Status</th><th>Actions</th></tr>
-                </thead>
-                <tbody>
-                  {formData.installments.map((row, index) => (
-                    <tr key={index}>
-                      <td>{row.sno}</td>
-                      <td><input type="date" value={row.dueDate} onChange={(e) => handleInstallmentChange(index, 'dueDate', e.target.value)} /></td>
-                      <td><input type="number" value={row.amount} onChange={(e) => handleInstallmentChange(index, 'amount', e.target.value)} /></td>
-                      <td><input type="text" value={row.status} onChange={(e) => handleInstallmentChange(index, 'status', e.target.value)} /></td>
-                      <td>
-                        {/* Remove button if needed */}
-                      </td>
+              <div className="installments-section">
+                <h3>Installments</h3>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>S.No</th>
+                      <th>Due Date</th>
+                      <th>Amount</th>
+                      <th>Balance</th> {/* Added Balance column header */}
+                      <th>Status</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-              <button type="button" onClick={addInstallmentRow}>+ Add Installment</button>
-            </div>
-          )}
+                  </thead>
+                  <tbody>
+                    {formData.installments.map((row, index) => (
+                      <tr key={index}>
+                        <td>{row.sno}</td>
+                        <td><input type="date" value={row.dueDate} onChange={(e) => handleInstallmentChange(index, 'dueDate', e.target.value)} /></td>
+                        <td><input type="number" value={row.amount} onChange={(e) => handleInstallmentChange(index, 'amount', e.target.value)} /></td>
+                        <td><input type="number" value={row.balance} readOnly /></td> {/* Display balance */}
+                        <td>
+                          <select value={row.status} onChange={(e) => handleInstallmentChange(index, 'status', e.target.value)}> {/* Dropdown for status */}
+                            <option value="Unpaid">Unpaid</option>
+                            <option value="Paid">Paid</option>
+                          </select>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <button type="button" onClick={addInstallmentRow} className="add-button">Add Installment</button>
+              </div>
+            )}
 
           <div className="form-row">
             <div className="form-group">
