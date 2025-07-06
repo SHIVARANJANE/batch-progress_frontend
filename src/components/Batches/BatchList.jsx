@@ -7,36 +7,63 @@ const BatchList = ({ staffId, isAdminView }) => {
   const [batches, setBatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [popup, setPopup] = useState({ visible: false, type: '', message: '' }); // State for popups
+
+  // Function to show UI popups
+  const showUIPopup = (type, message) => {
+      setPopup({ visible: true, type, message });
+      setTimeout(() => {
+          setPopup({ visible: false, type: '', message: '' });
+      }, 4000); // Popup disappears after 4 seconds
+  };
+
+  const fetchBatches = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      let url = `${process.env.REACT_APP_API_BASE_URL}/api/batches`;
+      if (staffId) {
+        // If staffId is provided, fetch only batches for that staff
+        url = `${process.env.REACT_APP_API_BASE_URL}/api/batches/staff/${staffId}`;
+      }
+      // No explicit else for isAdminView, as the default /api/batches fetches all
+
+      const response = await axios.get(url, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}` // Assuming you store token in localStorage
+        }
+      });
+      setBatches(response.data.data);
+    } catch (err) {
+      console.error('Error fetching batches:', err);
+      setError('Failed to fetch batches. Please try again.');
+      setBatches([]); // Clear batches on error
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchBatches = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        let url = `${process.env.REACT_APP_API_BASE_URL}/api/batches`;
-        if (staffId) {
-          // If staffId is provided, fetch only batches for that staff
-          url = `${process.env.REACT_APP_API_BASE_URL}/api/batches/staff/${staffId}`;
-        }
-        // No explicit else for isAdminView, as the default /api/batches fetches all
-
-        const response = await axios.get(url, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}` // Assuming you store token in localStorage
-          }
-        });
-        setBatches(response.data.data);
-      } catch (err) {
-        console.error('Error fetching batches:', err);
-        setError('Failed to fetch batches. Please try again.');
-        setBatches([]); // Clear batches on error
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchBatches();
   }, [staffId, isAdminView]); // Re-fetch if staffId or view type changes
+
+  const handleDeleteBatch = async (batchId) => {
+    if (window.confirm('Are you sure you want to delete this batch? This action cannot be undone.')) {
+      try {
+        await axios.delete(`${process.env.REACT_APP_API_BASE_URL}/api/batches/${batchId}`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        showUIPopup('success', 'Batch deleted successfully!');
+        // Re-fetch batches to update the list
+        fetchBatches();
+      } catch (err) {
+        console.error('Error deleting batch:', err);
+        showUIPopup('error', err.response?.data?.message || 'Failed to delete batch.');
+      }
+    }
+  };
 
   if (loading) {
     return <div className="loading-message">Loading batches...</div>;
@@ -59,6 +86,7 @@ const BatchList = ({ staffId, isAdminView }) => {
             <h4>Course: {batch.courseId?.name || 'N/A'}</h4>
             {isAdminView && <p>Staff: {batch.staffId?.name || 'N/A'}</p>}
             <p className="batch-occupancy">
+              Occupancy:
               {batch.students ? `${batch.students.length}/${batch.maxStudents}` : `0/${batch.maxStudents}`}
             </p>
           </div>
@@ -75,10 +103,91 @@ const BatchList = ({ staffId, isAdminView }) => {
           ) : (
             <p>No students in this batch yet.</p>
           )}
+          {isAdminView && (
+            <button
+              onClick={() => handleDeleteBatch(batch._id)}
+              className="delete-batch-button" // Add a CSS class for styling
+            >
+              Delete Batch
+            </button>
+          )}
         </div>
       ))}
+      {/* Render the PopupComponent (assuming it's available or define it here) */}
+      {popup.visible && (
+        <PopupComponent type={popup.type} message={popup.message} onClose={() => setPopup({ visible: false })} />
+      )}
     </div>
   );
 };
+
+// Basic Popup Component (Copied from StudentFormModal.jsx for self-containment)
+const PopupComponent = ({ type, message, onClose }) => {
+    let backgroundColor = '';
+    let borderColor = '';
+    switch (type) {
+        case 'success':
+            backgroundColor = 'rgba(144, 238, 144, 0.9)'; // lightgreen with opacity
+            borderColor = 'green';
+            break;
+        case 'error':
+            backgroundColor = 'rgba(240, 128, 128, 0.9)'; // lightcoral with opacity
+            borderColor = 'red';
+            break;
+        case 'info':
+            backgroundColor = 'rgba(173, 216, 230, 0.9)'; // lightblue with opacity
+            borderColor = 'steelblue';
+            break;
+        default:
+            backgroundColor = 'rgba(255, 255, 204, 0.9)'; // lightyellow with opacity
+            borderColor = 'orange';
+    }
+
+    return (
+        <div style={{
+            position: 'fixed',
+            top: '20px',
+            right: '20px',
+            padding: '12px 25px',
+            backgroundColor: backgroundColor,
+            border: `1px solid ${borderColor}`,
+            borderRadius: '8px',
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            color: '#333',
+            fontSize: '16px',
+            fontWeight: 'bold',
+            animation: 'fadeInOut 4s forwards' // Basic animation
+        }}>
+            <span>{message}</span>
+            <button
+                onClick={onClose}
+                style={{
+                    marginLeft: '15px',
+                    background: 'none',
+                    border: 'none',
+                    fontSize: '18px',
+                    cursor: 'pointer',
+                    color: '#333',
+                    fontWeight: 'bold'
+                }}
+            >
+                &times;
+            </button>
+            <style>{`
+                @keyframes fadeInOut {
+                    0% { opacity: 0; transform: translateY(-20px); }
+                    10% { opacity: 1; transform: translateY(0); }
+                    90% { opacity: 1; transform: translateY(0); }
+                    100% { opacity: 0; transform: translateY(-20px); }
+                }
+            `}</style>
+        </div>
+    );
+};
+
 
 export default BatchList;

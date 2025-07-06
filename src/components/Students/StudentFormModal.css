@@ -1,181 +1,412 @@
+/* StudentFormModal.css */
+
+/* General Modal Styling */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(31, 41, 55, 0.7);
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6); /* Slightly darker overlay */
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 999;
+  z-index: 1000;
+  backdrop-filter: blur(3px); /* Subtle blur for modern feel */
 }
 
-.form-modal {
-  background: #ffffff;
-  border-radius: 16px;
-  width: 95%;
-  max-width: 900px;
-  max-height: 90vh;
-  overflow-y: auto;
-  padding: 30px 40px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
-  position: relative;
-  animation: fadeIn 0.3s ease-in-out;
+.modal-content {
+  background-color: #ffffff;
+  padding: 30px;
+  border-radius: 12px; /* More rounded corners */
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); /* Enhanced shadow */
+  width: 90%;
+  max-width: 900px; /* Increased max-width for better form layout */
+  max-height: 90vh; /* Limit height and enable scrolling */
+  overflow-y: auto; /* Enable scrolling for long forms */
+  animation: fadeIn 0.3s ease-out; /* Fade-in animation */
+  position: relative; /* For positioning close button */
 }
 
-.form-modal h3 {
-  margin-bottom: 24px;
-  font-size: 22px;
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Header */
+.modal-content h3 {
+  font-size: 2.2em; /* Slightly larger title */
+  color: #333;
+  margin-bottom: 25px;
+  text-align: center;
   font-weight: 600;
-  color: #111827;
+  position: relative;
 }
 
-.form-modal form {
+.modal-content h3::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: -10px;
+  width: 60px;
+  height: 3px;
+  background-color: #007bff; /* Accent color */
+  border-radius: 2px;
+}
+
+/* Form Layout */
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); /* Responsive grid */
+  gap: 25px; /* Increased gap for breathing room */
+  margin-bottom: 25px;
+}
+
+.form-group {
   display: flex;
   flex-direction: column;
-  gap: 16px;
 }
 
-.form-modal input,
-.form-modal select,
-.form-modal textarea {
-  padding: 10px 14px;
-  border-radius: 10px;
-  border: 1px solid #d1d5db;
-  font-size: 14px;
+.form-group label {
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #555;
+  font-size: 0.95em;
+}
+
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group input[type="email"],
+.form-group input[type="date"],
+.form-group select {
   width: 100%;
+  padding: 12px 15px; /* More padding */
+  border: 1px solid #ddd; /* Lighter border */
+  border-radius: 8px; /* Slightly more rounded inputs */
+  font-size: 1em;
+  color: #333;
+  transition: all 0.3s ease;
+  box-sizing: border-box; /* Include padding and border in the element's total width and height */
 }
 
-.form-modal textarea {
-  min-height: 80px;
-  resize: vertical;
-}
-
-.form-modal input:focus,
-.form-modal select:focus,
-.form-modal textarea:focus {
-  border-color: #3b82f6;
+.form-group input[type="text"]:focus,
+.form-group input[type="number"]:focus,
+.form-group input[type="email"]:focus,
+.form-group input[type="date"]:focus,
+.form-group select:focus {
+  border-color: #007bff; /* Highlight on focus */
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2); /* Soft focus ring */
   outline: none;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
 }
 
-/* Table styling for fees/installments */
-.fee-table table,
-.installment-table table {
+/* DatePicker specific adjustments */
+.rmdp-container {
+    width: 100%; /* Ensure DatePicker container takes full width */
+}
+
+.rmdp-input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 1em;
+    color: #333;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+.rmdp-input:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+    outline: none;
+}
+
+
+/* Error Messages */
+.error {
+  color: #e74c3c; /* Red color for errors */
+  font-size: 0.85em;
+  margin-top: 5px;
+  animation: shake 0.5s ease-in-out; /* Subtle shake animation */
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-5px); }
+  40%, 80% { transform: translateX(5px); }
+}
+
+
+/* Combo Course Specifics */
+.combo-course-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.combo-course-row select {
+  flex-grow: 1; /* Allow select to take available space */
+  margin-right: 10px; /* Space between select and button */
+}
+
+.add-combo-button,
+.remove-combo-button {
+  background-color: #28a745; /* Green for add */
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 15px;
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: background-color 0.2s ease;
+  white-space: nowrap; /* Prevent text wrapping */
+}
+
+.remove-combo-button {
+  background-color: #dc3545; /* Red for remove */
+  padding: 8px 12px; /* Slightly different padding */
+}
+
+.add-combo-button:hover {
+  background-color: #218838;
+}
+
+.remove-combo-button:hover {
+  background-color: #c82333;
+}
+
+
+/* Fee Details / Installments Tables */
+.fee-table {
+  margin-top: 30px;
+  margin-bottom: 30px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  overflow: hidden; /* Ensures rounded corners on table */
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.fee-table h4 {
+  background-color: #f8f9fa; /* Light background for header */
+  padding: 15px 20px;
+  margin: 0;
+  font-size: 1.2em;
+  color: #333;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  align-items: center;
+}
+
+.fee-table h4::before {
+    margin-right: 10px;
+}
+
+
+.fee-table table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 10px;
 }
 
 .fee-table th,
-.fee-table td,
-.installment-table th,
-.installment-table td {
-  border: 1px solid #e5e7eb;
+.fee-table td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.fee-table th {
+  background-color: #f2f2f2; /* Lighter grey for table headers */
+  font-weight: 600;
+  color: #555;
+  text-transform: uppercase;
+  font-size: 0.85em;
+}
+
+.fee-table td input[type="date"],
+.fee-table td input[type="text"],
+.fee-table td input[type="number"] {
+  width: calc(100% - 10px); /* Adjust for padding within cells */
   padding: 8px;
-  font-size: 13px;
-  text-align: center;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.95em;
+  box-sizing: border-box;
 }
 
-.fee-table h4,
-.installment-table h4 {
-  margin-top: 16px;
-  font-size: 16px;
-  color: #1f2937;
+.fee-table td:last-child {
+  text-align: center; /* Center actions column */
 }
 
-/* Buttons inside form */
-button {
-  padding: 8px 16px;
-  background-color: #2563eb;
+.fee-table button {
+  background-color: #007bff;
   color: white;
   border: none;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 500;
+  border-radius: 6px;
+  padding: 10px 20px;
   cursor: pointer;
-  transition: background 0.3s ease;
+  font-size: 0.95em;
+  margin-top: 15px;
+  margin-left: 20px;
+  transition: background-color 0.2s ease;
 }
 
-button:hover {
-  background-color: #1e40af;
+.fee-table button:hover {
+  background-color: #0056b3;
 }
 
-button[type="submit"] {
-  background-color: #10b981;
-}
 
-button[type="submit"]:hover {
-  background-color: #059669;
-}
-
-button[type="button"].cancel {
-  background-color: #f87171;
-}
-
-button[type="button"].cancel:hover {
-  background-color: #ef4444;
-}
-
-/* Modal actions (Save, Cancel, Assign) */
-.modal-actions {
-  margin-top: 20px;
+/* Form Actions (Buttons) */
+.form-actions {
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: flex-end;
+  justify-content: flex-end; /* Align buttons to the right */
+  gap: 15px; /* Space between buttons */
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #eee; /* Separator line */
 }
 
-/* Suggested slots section */
-.suggestion-box {
-  background: #fef3c7;
-  border: 1px dashed #facc15;
-  padding: 14px 20px;
-  border-radius: 12px;
-  margin-bottom: 20px;
+.form-actions button {
+  padding: 12px 25px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.05em;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
-.suggestion-box p {
-  margin-bottom: 6px;
-  font-size: 14px;
-  color: #92400e;
+.form-actions button[type="submit"] {
+  background-color: #28a745; /* Save button green */
+  color: white;
 }
 
-.suggested-slot-btn {
-  margin: 4px;
-  background-color: #fbbf24;
-  color: #1f2937;
-  font-weight: 600;
+.form-actions button[type="submit"]:hover:not(:disabled) {
+  background-color: #218838;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
 }
 
-.suggested-slot-btn:hover {
-  background-color: #f59e0b;
+.form-actions button[type="button"].assign-batch-button {
+  background-color: #007bff; /* Blue for assign batch */
+  color: white;
 }
 
-/* For DatePicker label */
-label {
-  font-weight: 600;
-  font-size: 14px;
-  color: #374151;
-  margin-top: 10px;
-  display: block;
+.form-actions button[type="button"].assign-batch-button:hover:not(:disabled) {
+  background-color: #0056b3;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
 }
 
-/* Animations */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
+.form-actions button[type="button"]:last-child { /* Cancel button */
+  background-color: #6c757d; /* Grey for cancel */
+  color: white;
 }
 
-/* Scrollbar styling */
-.form-modal::-webkit-scrollbar {
-  width: 8px;
+.form-actions button[type="button"]:last-child:hover:not(:disabled) {
+  background-color: #5a6268;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
 }
-.form-modal::-webkit-scrollbar-track {
-  background: #f1f1f1;
+
+.form-actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
 }
-.form-modal::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 10px;
+
+
+/* Popup Component Styling (from your existing code, slightly enhanced) */
+/* (Keep your existing @keyframes fadeInOut as it is in JSX, or move it here) */
+.popup-container { /* New class for the outer div of the PopupComponent */
+    position: fixed;
+    top: 25px;
+    right: 25px;
+    padding: 15px 30px; /* More padding */
+    border-radius: 10px; /* Slightly more rounded */
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.2); /* Stronger shadow */
+    color: #333;
+    font-size: 1.05em; /* Slightly larger font */
+    font-weight: 600; /* Bolder font */
+    animation: fadeInOut 4s forwards;
+    min-width: 250px; /* Ensure a minimum width */
+    max-width: 400px; /* Prevent it from becoming too wide */
+}
+
+/* Specific colors for popup types */
+.popup-success {
+    background-color: rgba(186, 245, 186, 0.95); /* Lighter green */
+    border: 1px solid #4CAF50; /* Darker green border */
+}
+
+.popup-error {
+    background-color: rgba(255, 179, 179, 0.95); /* Lighter coral */
+    border: 1px solid #D32F2F; /* Darker red border */
+}
+
+.popup-info {
+    background-color: rgba(187, 232, 255, 0.95); /* Lighter blue */
+    border: 1px solid #1976D2; /* Darker blue border */
+}
+
+.popup-button {
+    margin-left: 20px;
+    background: none;
+    border: none;
+    font-size: 1.5em; /* Larger close button */
+    cursor: pointer;
+    color: #555; /* Darker color for close button */
+    font-weight: bold;
+    transition: transform 0.2s ease;
+}
+
+.popup-button:hover {
+    transform: scale(1.1);
+    color: #000;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .modal-content {
+    width: 95%;
+    padding: 20px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr; /* Stack columns on small screens */
+    gap: 20px;
+  }
+
+  .form-actions {
+    flex-direction: column; /* Stack buttons on small screens */
+    align-items: stretch; /* Stretch buttons to full width */
+  }
+
+  .form-actions button {
+    width: 100%;
+    margin-bottom: 10px; /* Add space between stacked buttons */
+  }
+
+  .fee-table h4 {
+    padding: 12px 15px;
+    font-size: 1.1em;
+  }
+
+  .fee-table th,
+  .fee-table td {
+    padding: 10px 12px;
+    font-size: 0.9em;
+  }
 }
