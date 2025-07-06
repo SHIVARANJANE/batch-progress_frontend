@@ -19,6 +19,17 @@ function Home() {
       });
   }, []);
 
+  // Helper function to get the display name for a course
+  const getCourseDisplayName = (course) => {
+    if (course.courseType === 'Combo' && course.comboCourses && course.comboCourses.length > 0) {
+      // If it's a combo course, and comboCourses exist, generate a name
+      // Prioritize course.name if it's explicitly set for a combo (e.g., if you added that input field)
+      return course.name || `Combo: ${course.comboCourses.join(' + ')}`;
+    }
+    // Otherwise (for individual courses or combo courses with an explicit name), use course.name
+    return course.name;
+  };
+
   return (
     <div className="home-container">
       <div className="top-bar">
@@ -28,9 +39,18 @@ function Home() {
       <div className="course-grid">
         {courses.map((course, index) => (
           <div className="course-card fade-in" key={index}>
-            <h3>{course.name}</h3>
+            {/* Use the helper function to get the display name */}
+            <h3>{getCourseDisplayName(course)}</h3>
             <p><strong>Duration:</strong> {course.duration}</p>
             <p><strong>Fees:</strong> ₹{course.fees}</p>
+            {/* You might want to display custom properties here too if they are relevant to the public view */}
+            {course.customProperties && Object.keys(course.customProperties).length > 0 && (
+              <div className="custom-props-display">
+                {Object.entries(course.customProperties).map(([key, value]) => (
+                  <p key={key}><strong>{key}:</strong> {value}</p>
+                ))}
+              </div>
+            )}
           </div>
         ))}
       </div>

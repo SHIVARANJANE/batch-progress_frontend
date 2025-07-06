@@ -91,3 +91,26 @@
 .attendance-table button:hover {
   background-color: #218838;
 }
+/* Styling for Start Date and End Date cells */
+.start-date-cell {
+  background-color: #e6ffe6; /* Light green */
+  color: #336633;
+  font-weight: bold;
+}
+
+.end-date-cell {
+  background-color: #ffe6e6; /* Light red */
+  color: #663333;
+  font-weight: bold;
+}
+
+/* Added styling for header cells to match */
+.start-date-header {
+  background-color: #d4fcd4; /* Slightly darker green */
+  color: #225522;
+}
+
+.end-date-header {
+  background-color: #fcd4d4; /* Slightly darker red */
+  color: #552222;
+}

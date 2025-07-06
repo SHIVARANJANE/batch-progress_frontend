@@ -2,77 +2,73 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import StudentAttendanceModal from '../../components/Students/StudentsAttendanceModal';
-import BatchList from '../../components/Batches/BatchList'; // Import the new BatchList component
-import './StaffDashboard.css'; // You might need to create this for tab styling
+import BatchList from '../../components/Batches/BatchList';
+import './StaffDashboard.css';
 
 const StaffDashboard = () => {
   const [students, setStudents] = useState([]);
   const [selectedStudent, setSelectedStudent] = useState(null);
-  const [activeTab, setActiveTab] = useState('attendance'); // 'attendance' or 'batches'
+  const [activeTab, setActiveTab] = useState('attendance');
   const [loadingStudents, setLoadingStudents] = useState(true);
   const [errorStudents, setErrorStudents] = useState(null);
 
-  // Get staffId from localStorage (or auth context)
-  const staffId = localStorage.getItem('staffId'); // Ensure 'staffId' is stored here upon login
+  const staffId = localStorage.getItem('staffId');
 
   useEffect(() => {
     const fetchStudents = async () => {
       if (!staffId) {
         console.warn("Staff ID not found in localStorage. Cannot fetch students.");
-        setStudents([]); // Ensure students is an empty array
+        setStudents([]);
         setLoadingStudents(false);
         return;
       }
 
-      setLoadingStudents(true); // Set loading to true before fetching
-      setErrorStudents(null); // Clear previous errors
+      setLoadingStudents(true);
+      setErrorStudents(null);
 
       try {
+        // Ensure this API endpoint populates the 'enrollmentId' field to get access to startDate and endDate
         const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/students?staffId=${staffId}`, {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}` // Include auth token
+            Authorization: `Bearer ${localStorage.getItem('token')}`
           }
         });
-        // Ensure response.data.data is an array, default to empty array if not
+
         if (Array.isArray(response.data.data)) {
           setStudents(response.data.data);
         } else {
           console.warn("API response for students is not an array:", response.data);
-          setStudents([]); // Default to empty array to prevent 'length' error
+          setStudents([]);
         }
       } catch (error) {
         console.error("Error fetching students for staff:", error.response?.data || error.message);
         setErrorStudents(`Failed to load students: ${error.response?.data?.message || error.message}`);
-        setStudents([]); // Default to empty array on error
+        setStudents([]);
       } finally {
-        setLoadingStudents(false); // Set loading to false after fetching (success or error)
+        setLoadingStudents(false);
       }
     };
 
     fetchStudents();
-  }, [staffId]); // Re-run effect if staffId changes
+  }, [staffId]);
 
   const handleAttendanceMarked = (date, status) => {
-    // Corrected API endpoint for marking attendance
     axios.patch(`${process.env.REACT_APP_API_BASE_URL}/api/students/${selectedStudent._id}/mark-attendance`, { date, status }, {
       headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}` // Include auth token
+        Authorization: `Bearer ${localStorage.getItem('token')}`
       }
     })
       .then(res => {
-        // Assuming your backend returns the updated attendance or simply a success status
         const updatedAttendance = { ...selectedStudent.attendance, [date]: status };
         setSelectedStudent({ ...selectedStudent, attendance: updatedAttendance });
-        
-        // Update the student list in the state to reflect the attendance change immediately
+
         setStudents(prevStudents =>
           prevStudents.map(s =>
             s._id === selectedStudent._id
-              ? { ...s, attendance: updatedAttendance } // Update the specific student's attendance
+              ? { ...s, attendance: updatedAttendance }
               : s
           )
         );
-        // Optionally, show a success message
         alert("Attendance marked successfully!");
       })
       .catch(err => {
@@ -117,7 +113,9 @@ const StaffDashboard = () => {
                     <th>Name</th>
                     <th>Email</th>
                     <th>Course</th>
-                    <th>Batch Slot</th> {/* Added Batch Slot for clarity */}
+                    <th>Batch Slot</th>
+                    <th className="start-date-header">Start Date</th> {/* Added header */}
+                    <th className="end-date-header">End Date</th> {/* Added header */}
                     <th>Action</th>
                   </tr>
                 </thead>
@@ -127,7 +125,13 @@ const StaffDashboard = () => {
                       <td>{stu.name}</td>
                       <td>{stu.email}</td>
                       <td>{stu.enrollmentId?.courseName || stu.enrollmentId?.courseId?.name || 'N/A'}</td>
-                      <td>{stu.preferredTimeSlot || 'N/A'}</td> {/* Displaying preferredTimeSlot from student */}
+                      <td>{stu.preferredTimeSlot || 'N/A'}</td>
+                      <td className="start-date-cell">
+                        {stu.enrollmentId?.startDate ? new Date(stu.enrollmentId.startDate).toLocaleDateString() : 'N/A'}
+                      </td>
+                      <td className="end-date-cell">
+                        {stu.enrollmentId?.endDate ? new Date(stu.enrollmentId.endDate).toLocaleDateString() : 'N/A'}
+                      </td>
                       <td>
                         <button onClick={() => setSelectedStudent(stu)}>Mark Attendance</button>
                       </td>
@@ -141,7 +145,6 @@ const StaffDashboard = () => {
 
         {activeTab === 'batches' && (
           <div>
-            {/* Render BatchList for staff view, passing the staffId */}
             <BatchList staffId={staffId} isAdminView={false} />
           </div>
         )}
