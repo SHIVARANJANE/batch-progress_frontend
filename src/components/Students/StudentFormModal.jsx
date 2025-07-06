@@ -189,7 +189,7 @@ const StudentFormModal = ({ initialData, onSave, onCancel }) => {
   const [formData, setFormData] = useState({
     name: '', mobile: '', email: '', regDate: '',
     vertical: '', domain: '', category: '',
-    courseType: 'Individual', courseName: '', comboCourses: [''],
+    courseType: 'Individual', courseName: '', comboCourses: [],
     amount: '', frequency: '', duration: '', sessionLength: 1,
     startDate: '', endDate: '', breakDates: [],
     paymentMode: 'Single',
@@ -212,12 +212,18 @@ useEffect(() => {
       ...ins,
       dueDate: ins.dueDate && !isNaN(new Date(ins.dueDate)) ? new Date(ins.dueDate).toISOString().split('T')[0] : ''
     }));
-
+     const initialComboCourses = (initialData.enrollmentId?.comboCourses || [])
+      .filter(name => name) // Filter out empty strings if any
+      .map(courseName => {
+        const course = courses.find(c => c.name === courseName && c.courseType === 'Individual');
+        return course ? { courseId: course._id, courseName: course.name } : { courseId: '', courseName: courseName };
+      });
     const updated = {
       ...initialData,
       courseName: initialData.courseType === 'Individual' && initialData.enrollmentId?.courseId?._id
         ? initialData.enrollmentId.courseId._id
         : initialData.enrollmentId?.courseName || '',
+      comboCourses: initialData.courseType === 'Combo' ? initialComboCourses : [],
       regDate: initialData.regDate ? new Date(initialData.regDate).toISOString().split('T')[0] : '',
       startDate: initialData.enrollmentId?.startDate ? new Date(initialData.enrollmentId.startDate).toISOString().split('T')[0] : '',
       endDate: initialData.enrollmentId?.endDate ? new Date(initialData.enrollmentId.endDate).toISOString().split('T')[0] : '',
@@ -250,7 +256,7 @@ useEffect(() => {
       setSelectedStaffId(initialData.staffId);
     }
   }
-}, [initialData]);
+}, [initialData,courses]);
 
 // ✅ Sync selectedStaffDetails when selectedStaffId changes and staffList is available
 // This is the SINGLE SOURCE OF TRUTH for selectedStaffDetails
@@ -396,16 +402,6 @@ useEffect(() => {
       } else {
         delete newErrors.mobile;
       }
-    } else if (name === 'regDate') {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const selectedDate = new Date(value);
-      selectedDate.setHours(0, 0, 0, 0);
-      if (selectedDate < today) {
-        newErrors.regDate = 'Registration date cannot be in the past.';
-      } else {
-        delete newErrors.regDate;
-      }
     } else if (name === 'startDate') {
       const regDate = new Date(formData.regDate);
       regDate.setHours(0, 0, 0, 0);
@@ -416,7 +412,24 @@ useEffect(() => {
       } else {
         delete newErrors.startDate;
       }
-    } else if (name === 'courseName') {
+    } else if (name === 'courseType') {
+      if (value === 'Individual') {
+        setFormData(prev => ({
+          ...prev,
+          courseType: value,
+          comboCourses: [], // Clear comboCourses if switching to Individual
+          courseName: '', // Clear individual courseName
+        }));
+      } if(value === 'Combo') {
+        setFormData(prev => ({
+          ...prev,
+          courseType: value,
+          courseName: '', // Clear individual courseName
+          comboCourses: [{ courseId: '', courseName: '' }], // Start with one empty combo course row
+        }));
+      }
+    }
+    else if (name === 'courseName') {
   const selectedCourse = courses.find(c => c._id === value);
   if (selectedCourse) {
     setFormData(prev => ({
@@ -487,7 +500,72 @@ useEffect(() => {
   const addInstallmentRow = () => {
     setFormData(prev => ({ ...prev, installments: [...prev.installments, { sno: prev.installments.length + 1, dueDate: '', amount: '', status: 'Unpaid' }] }));
   };
+const handleComboCourseChange = (index, courseId) => {
+    const updatedComboCourses = [...formData.comboCourses];
+    const selectedCourse = courses.find(c => c._id === courseId);
 
+    if (selectedCourse) {
+      updatedComboCourses[index] = {
+        courseId: selectedCourse._id,
+        courseName: selectedCourse.name
+      };
+    } else {
+      updatedComboCourses[index] = { courseId: '', courseName: '' };
+    }
+
+    // Recalculate amount and duration for combo courses
+    const totalAmount = updatedComboCourses.reduce((sum, course) => {
+      const foundCourse = courses.find(c => c._id === course.courseId);
+      return sum + (foundCourse ? foundCourse.fees : 0);
+    }, 0);
+
+    const totalDuration = updatedComboCourses.reduce((sum, course) => {
+        const foundCourse = courses.find(c => c._id === course.courseId);
+        // Ensure duration is a number for addition. Handle cases where it might be a string like "60 hrs".
+        return sum + (foundCourse ? parseFloat(foundCourse.duration) : 0);
+    }, 0);
+
+
+    setFormData(prev => ({
+      ...prev,
+      comboCourses: updatedComboCourses,
+      amount: totalAmount,
+      duration: totalDuration.toString(), // Store back as string if expected
+    }));
+  };
+
+  const addComboCourseRow = () => {
+    if (formData.comboCourses.length < 10) { // Limit to 10 courses
+      setFormData(prev => ({
+        ...prev,
+        comboCourses: [...prev.comboCourses, { courseId: '', courseName: '' }]
+      }));
+    } else {
+      showUIPopup('info', 'Maximum of 10 combo courses can be added.');
+    }
+  };
+
+  const removeComboCourseRow = (index) => {
+    const updatedComboCourses = formData.comboCourses.filter((_, i) => i !== index);
+
+    // Recalculate amount and duration after removal
+    const totalAmount = updatedComboCourses.reduce((sum, course) => {
+      const foundCourse = courses.find(c => c._id === course.courseId);
+      return sum + (foundCourse ? foundCourse.fees : 0);
+    }, 0);
+
+    const totalDuration = updatedComboCourses.reduce((sum, course) => {
+        const foundCourse = courses.find(c => c._id === course.courseId);
+        return sum + (foundCourse ? parseFloat(foundCourse.duration) : 0);
+    }, 0);
+
+    setFormData(prev => ({
+      ...prev,
+      comboCourses: updatedComboCourses,
+      amount: totalAmount,
+      duration: totalDuration.toString(),
+    }));
+  };
   // The assignToBatch function now correctly makes the API call and uses UI popups
   const assignToBatch = async () => {
     // Ensure initialData is available and has necessary IDs and preferredTimeSlot
@@ -532,10 +610,10 @@ useEffect(() => {
 
     // Prepare enrollment data
     const enrollmentPayload = {
-      courseId: formData.courseName,
+      courseId: formData.courseType === 'Individual' ? formData.courseName : null, // Only set courseId for Individual
       courseType: formData.courseType,
-      courseName: formData.courseType === 'Individual' ? courses.find(c => c._id === formData.courseName)?.name : formData.courseName,
-      comboCourses: formData.comboCourses,
+      courseName: formData.courseType === 'Individual' ? courses.find(c => c._id === formData.courseName)?.name : '', // Store name for Individual
+      comboCourses: formData.courseType === 'Combo' ? formData.comboCourses.map(c => c.courseName).filter(Boolean) : [], // Map to names for Combo
       amount: parseFloat(formData.amount),
       frequency: formData.preferredFrequency,
       duration: formData.duration,
@@ -546,6 +624,7 @@ useEffect(() => {
       feeDetails: formData.feeDetails,
       installments: formData.paymentMode === 'Installment' ? formData.installments : []
     };
+
 
     const studentPayload = {
       name: formData.name,
@@ -704,15 +783,49 @@ useEffect(() => {
                   ))}
                 </select>
               ) : (
-                <select name="comboCourses" multiple value={formData.comboCourses} onChange={(e) => {
-                  const options = [...e.target.selectedOptions].map(option => option.value);
-                  setFormData(prev => ({ ...prev, comboCourses: options }));
-                }} required>
-                  <option value="">Select Combo Courses</option>
-                  {courses.filter(c => c.courseType === 'Individual').map(course => (
-                    <option key={course._id} value={course.name}>{course.name}</option>
-                  ))}
-                </select>
+                <>
+                  {formData.comboCourses.map((comboCourse, index) => {
+                    const selectedCourseIds = formData.comboCourses
+                      .filter((_, i) => i !== index) // Exclude current row's selection for filtering others
+                      .map(c => c.courseId);
+
+                    const availableCourses = courses.filter(c =>
+                      c.courseType === 'Individual' &&
+                      !selectedCourseIds.includes(c._id)
+                    );
+
+                    return (
+                      <div key={index} className="combo-course-row">
+                        <select
+                          value={comboCourse.courseId}
+                          onChange={(e) => handleComboCourseChange(index, e.target.value)}
+                          required
+                          style={{ width: '85%', marginRight: '5px' }}
+                        >
+                          <option value="">Select Course {index + 1}</option>
+                          {availableCourses.map(course => (
+                            <option key={course._id} value={course._id}>{course.name}</option>
+                          ))}
+                        </select>
+                        {formData.comboCourses.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeComboCourseRow(index)}
+                            className="remove-combo-button"
+                            title="Remove Course"
+                          >
+                            &times;
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                  {formData.comboCourses.length < 10 && (
+                    <button type="button" onClick={addComboCourseRow} className="add-combo-button">
+                      + Add Course
+                    </button>
+                  )}
+                </>
               )}
             </div>
             <div className="form-group">

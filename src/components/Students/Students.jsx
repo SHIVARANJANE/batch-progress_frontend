@@ -17,7 +17,7 @@ const Students = () => {
   const fetchStudents = async () => {
     try {
       const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/students`);
-      setStudents(res.data);
+      setStudents(res.data.data);
     } catch (err) {
       console.error('Failed to fetch students:', err);
     }
