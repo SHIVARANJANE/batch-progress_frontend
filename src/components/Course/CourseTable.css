@@ -1,79 +1,258 @@
-.grouped-table {
-  margin: 20px 0;
+/* General container for the entire course dashboard */
+.course-dashboard {
+  padding: 20px;
+  background-color: #f8f9fa;
+  font-family: 'Arial', sans-serif;
 }
 
-.grouped-table h3 {
-  background-color: #f0f0f0;
-  padding: 10px;
-  font-size: 1.2rem;
+h2 {
+  color: #333;
+  text-align: center;
+  margin-bottom: 30px;
+  font-size: 2em;
+  border-bottom: 2px solid #007bff;
+  padding-bottom: 10px;
+  display: block;
+}
+
+.course-vertical-section {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  margin-bottom: 40px;
+  padding: 20px;
+}
+
+.vertical-title {
+  color: #007bff;
+  font-size: 1.8em;
+  margin-top: 0;
+  margin-bottom: 25px;
   border-left: 5px solid #007bff;
+  padding-left: 10px;
+}
+
+.combo-category-section {
   margin-top: 30px;
+  margin-bottom: 30px;
+  padding: 15px;
+  background-color: #f0f8ff; /* Light blue background for categories */
+  border-radius: 6px;
+  border: 1px solid #cceeff;
 }
 
-.course-table {
-  width: 100%;
-  border-collapse: collapse;
+.category-title {
+  color: #28a745; /* Green for category titles */
+  font-size: 1.5em;
+  margin-top: 0;
   margin-bottom: 20px;
+  border-bottom: 2px dashed #28a745;
+  padding-bottom: 5px;
 }
 
-.course-table thead th {
-  background-color: #007bff;
-  color: white;
+/* Card Container (Flexbox) */
+.course-cards-container {
+  display: flex;
+  flex-wrap: wrap; /* Allows cards to wrap to the next line */
+  gap: 25px; /* Space between cards */
+  justify-content: center; /* Center cards in the container */
   padding: 10px;
-  text-align: left;
 }
 
-.course-table tbody td {
-  padding: 10px;
-  border-bottom: 1px solid #ddd;
+/* Individual Course Card Styling */
+.course-card {
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  width: calc(33% - 25px); /* Three cards per row, adjusting for gap */
+  min-width: 280px; /* Minimum width for smaller screens */
+  flex-grow: 1; /* Allows cards to grow if space is available */
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  animation: fadeIn 0.5s ease-out forwards; /* Fade-in animation */
 }
 
-.course-table tbody tr:hover {
-  background-color: #f9f9f9;
+.course-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
 }
 
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start; /* Align name to top, actions to top */
+  margin-bottom: 15px;
+  border-bottom: 1px dashed #ddd;
+  padding-bottom: 10px;
+}
+
+.course-name {
+  color: #343a40;
+  font-size: 1.3em;
+  margin: 0;
+  flex-grow: 1; /* Allow name to take available space */
+  line-height: 1.3;
+}
+
+.card-actions {
+  display: flex;
+  gap: 10px;
+  margin-left: 15px; /* Space between name and icons */
+}
+
+.card-details p {
+  margin: 8px 0;
+  color: #555;
+  font-size: 0.95em;
+}
+
+.card-details p strong {
+  color: #333;
+}
+
+/* Combo Card Specific Styling */
+.combo-card {
+  border-color: #ffc107; /* Yellow border for combo cards */
+  background-color: #fffaf0; /* Light yellow background */
+}
+
+.combo-card .card-header {
+  border-bottom: 1px dashed #ffc107;
+}
+
+.combo-card .course-name {
+  color: #e0a800; /* Darker yellow for combo name */
+}
+
+.combo-courses-list {
+  margin-top: 15px;
+  padding-top: 10px;
+  border-top: 1px dashed #eee;
+}
+
+.combo-courses-list strong {
+  display: block;
+  margin-bottom: 5px;
+  color: #333;
+}
+
+.combo-courses-list ul {
+  list-style-type: none; /* No bullets */
+  padding-left: 0;
+  margin-top: 5px;
+}
+
+.combo-courses-list li {
+  background-color: #e2f0d9; /* Light green for list items */
+  padding: 5px 10px;
+  margin-bottom: 5px;
+  border-radius: 4px;
+  color: #3c763d;
+  font-size: 0.9em;
+}
+
+/* Icons */
 .icon {
-  margin: 0 6px;
+  font-size: 1.2em;
   cursor: pointer;
-  transition: transform 0.2s ease;
+  color: #007bff;
+  transition: color 0.2s ease-in-out;
 }
 
 .icon:hover {
-  transform: scale(1.2);
-  color: #007bff;
+  color: #0056b3;
 }
 
-/* Responsive */
+.icon.fa-trash {
+  color: #dc3545; /* Red for delete icon */
+}
+
+.icon.fa-trash:hover {
+  color: #c82333;
+}
+
+.no-courses-message {
+  text-align: center;
+  color: #6c757d;
+  font-style: italic;
+  margin-top: 30px;
+  font-size: 1.1em;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive Adjustments */
+@media (max-width: 1200px) {
+  .course-card {
+    width: calc(50% - 25px); /* Two cards per row */
+  }
+}
+
 @media (max-width: 768px) {
-  .course-table,
-  .course-table thead,
-  .course-table tbody,
-  .course-table th,
-  .course-table td,
-  .course-table tr {
-    display: block;
+  .course-card {
+    width: 100%; /* One card per row */
+    margin: 0 auto; /* Center the card */
   }
 
-  .course-table thead {
-    display: none;
+  .course-vertical-section,
+  .combo-category-section {
+    padding: 15px;
   }
 
-  .course-table tr {
-    margin-bottom: 15px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
+  h2 {
+    font-size: 1.8em;
+  }
+
+  .vertical-title {
+    font-size: 1.6em;
+  }
+
+  .category-title {
+    font-size: 1.3em;
+  }
+}
+
+@media (max-width: 480px) {
+  .course-dashboard {
     padding: 10px;
   }
 
-  .course-table td {
-    display: flex;
-    justify-content: space-between;
-    padding: 8px 0;
+  h2 {
+    font-size: 1.5em;
   }
 
-  .course-table td::before {
-    content: attr(data-label);
-    font-weight: bold;
-    margin-right: 10px;
+  .vertical-title {
+    font-size: 1.4em;
+  }
+
+  .category-title {
+    font-size: 1.2em;
+  }
+
+  .course-card {
+    padding: 15px;
+  }
+
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .card-actions {
+    margin-left: 0;
   }
 }

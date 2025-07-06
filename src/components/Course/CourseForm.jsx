@@ -33,11 +33,8 @@ function CourseForm({ onSave, onDelete, onCancel, initialData }) {
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (name === 'vertical') {
+      // When vertical changes, reset dependent fields but keep them as inputs
       setFormData({ ...formData, vertical: value, domain: '', category: '', name: '', comboCourses: [''] });
-    } else if (name === 'domain') {
-      setFormData({ ...formData, domain: value, category: '', name: '', comboCourses: [''] });
-    } else if (name === 'category') {
-      setFormData({ ...formData, category: value, name: '', comboCourses: [''] });
     } else {
       setFormData({ ...formData, [name]: value });
     }
@@ -85,22 +82,6 @@ function CourseForm({ onSave, onDelete, onCancel, initialData }) {
     }
   };
 
-  // Options
-  const domainOptions = {
-    Cadd: ['Mechanical/Mechatronics', 'Civil', 'Architecture', 'Electrical'],
-    Livewire: ['CS/IT'],
-    Synergy: ['Project Management', 'BA Taxation', 'Office'],
-  };
-
-  const categoryOptions = {
-    'Mechanical/Mechatronics': ['AutoCAD2D', 'Catia'],
-    Civil: ['AutoCAD', 'BIM'],
-    Architecture: ['Vray', 'Lumion'],
-    Electrical: ['IOT', 'Lighting Design'],
-    'CS/IT': ['Python', 'Java', 'C', 'C++'],
-    'Project Management': ['PMP', 'Power BI'],
-  };
-
   return (
     <div className="course-form">
       <h3>{initialData ? "✏️ Edit Course" : "➕ Add New Course"}</h3>
@@ -113,19 +94,25 @@ function CourseForm({ onSave, onDelete, onCancel, initialData }) {
           <option value="Synergy">Synergy</option>
         </select>
 
-        <select name="domain" value={formData.domain} onChange={handleChange} disabled={!formData.vertical}>
-          <option value="">Select Domain</option>
-          {domainOptions[formData.vertical]?.map((d, i) => (
-            <option key={i} value={d}>{d}</option>
-          ))}
-        </select>
+        {/* Domain input field */}
+        <input
+          type="text"
+          name="domain"
+          placeholder="Enter Domain"
+          value={formData.domain}
+          onChange={handleChange}
+          disabled={!formData.vertical}
+        />
 
-        <select name="category" value={formData.category} onChange={handleChange} disabled={!formData.domain}>
-          <option value="">Select Category</option>
-          {categoryOptions[formData.domain]?.map((cat, i) => (
-            <option key={i} value={cat}>{cat}</option>
-          ))}
-        </select>
+        {/* Category input field */}
+        <input
+          type="text"
+          name="category"
+          placeholder="Enter Category"
+          value={formData.category}
+          onChange={handleChange}
+          disabled={!formData.domain}
+        />
 
         <select name="courseType" value={formData.courseType} onChange={(e) =>
           setFormData({
