@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import StaffForm from './StaffForm';
-import StaffCompletionView from './StaffCompletionView';
 import './StaffTab.css';
 import { useNavigate } from 'react-router-dom'; // Import useNavigate
 
@@ -91,12 +90,6 @@ function StaffTab({ isAdminView = false }) {
               ➕ Add Staff
             </button>
           )}
-          <button
-            className="report-btn"
-            onClick={() => setShowCompletionView((prev) => !prev)}
-          >
-            {showCompletionView ? '📉 Hide Completion Report' : '📊 Show Completion Report'}
-          </button>
         </div>
       </div>
 
@@ -187,8 +180,6 @@ function StaffTab({ isAdminView = false }) {
         </div>
       )}
 
-      {/* Completion Report */}
-      {showCompletionView && <StaffCompletionView />}
     </div>
   );
 }
