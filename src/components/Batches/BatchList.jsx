@@ -30,10 +30,10 @@ const BatchList = ({ staffId, isAdminView }) => {
 
   // Function to show UI popups
   const showUIPopup = (type, message) => {
-      setPopup({ visible: true, type, message });
-      setTimeout(() => {
-          setPopup({ visible: false, type: '', message: '' });
-      }, 4000); // Popup disappears after 4 seconds
+    setPopup({ visible: true, type, message });
+    setTimeout(() => {
+      setPopup({ visible: false, type: '', message: '' });
+    }, 4000); // Popup disappears after 4 seconds
   };
 
   const fetchBatches = async () => {
@@ -80,6 +80,23 @@ const BatchList = ({ staffId, isAdminView }) => {
       } catch (err) {
         console.error('Error deleting batch:', err);
         showUIPopup('error', err.response?.data?.message || 'Failed to delete batch.');
+      }
+    }
+  };
+
+  const handleMarkComplete = async (batchId, studentId, studentName) => {
+    if (window.confirm(`Are you sure you want to mark ${studentName} as complete and remove them from this batch?`)) {
+      try {
+        await axios.put(`${process.env.REACT_APP_API_BASE_URL}/api/batches/${batchId}/removeStudent/${studentId}`, {}, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        showUIPopup('success', `${studentName} successfully marked complete and removed from batch.`);
+        fetchBatches(); // Re-fetch batches to update the UI
+      } catch (err) {
+        console.error('Error marking student complete:', err);
+        showUIPopup('error', err.response?.data?.message || 'Failed to mark student complete.');
       }
     }
   };
@@ -138,8 +155,16 @@ const BatchList = ({ staffId, isAdminView }) => {
           {batch.students && batch.students.length > 0 ? (
             <ul className="student-list">
               {batch.students.map(student => (
-                <li key={student._id}>
+                <li key={student._id} className="student-list-item"> {/* Added class for potential styling */}
                   {student.name} ({student.email || student.mobile || 'N/A'})
+                  {userRole === 'staff' && (
+                    <button
+                      className="mark-complete-button"
+                      onClick={() => handleMarkComplete(batch._id, student._id, student.name)}
+                    >
+                      Mark Complete
+                    </button>
+                  )}
                 </li>
               ))}
             </ul>
@@ -166,61 +191,61 @@ const BatchList = ({ staffId, isAdminView }) => {
 
 // Basic Popup Component (Copied from StudentFormModal.jsx for self-containment)
 const PopupComponent = ({ type, message, onClose }) => {
-    let backgroundColor = '';
-    let borderColor = '';
-    switch (type) {
-        case 'success':
-            backgroundColor = 'rgba(144, 238, 144, 0.9)'; // lightgreen with opacity
-            borderColor = 'green';
-            break;
-        case 'error':
-            backgroundColor = 'rgba(240, 128, 128, 0.9)'; // lightcoral with opacity
-            borderColor = 'red';
-            break;
-        case 'info':
-            backgroundColor = 'rgba(173, 216, 230, 0.9)'; // lightblue with opacity
-            borderColor = 'steelblue';
-            break;
-        default:
-            backgroundColor = 'rgba(255, 255, 204, 0.9)'; // lightyellow with opacity
-            borderColor = 'orange';
-    }
+  let backgroundColor = '';
+  let borderColor = '';
+  switch (type) {
+    case 'success':
+      backgroundColor = 'rgba(144, 238, 144, 0.9)'; // lightgreen with opacity
+      borderColor = 'green';
+      break;
+    case 'error':
+      backgroundColor = 'rgba(240, 128, 128, 0.9)'; // lightcoral with opacity
+      borderColor = 'red';
+      break;
+    case 'info':
+      backgroundColor = 'rgba(173, 216, 230, 0.9)'; // lightblue with opacity
+      borderColor = 'steelblue';
+      break;
+    default:
+      backgroundColor = 'rgba(255, 255, 204, 0.9)'; // lightyellow with opacity
+      borderColor = 'orange';
+  }
 
-    return (
-        <div style={{
-            position: 'fixed',
-            top: '20px',
-            right: '20px',
-            padding: '12px 25px',
-            backgroundColor: backgroundColor,
-            border: `1px solid ${borderColor}`,
-            borderRadius: '8px',
-            zIndex: 1000,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-            color: '#333',
-            fontSize: '16px',
-            fontWeight: 'bold',
-            animation: 'fadeInOut 4s forwards' // Basic animation
-        }}>
-            <span>{message}</span>
-            <button
-                onClick={onClose}
-                style={{
-                    marginLeft: '15px',
-                    background: 'none',
-                    border: 'none',
-                    fontSize: '18px',
-                    cursor: 'pointer',
-                    color: '#333',
-                    fontWeight: 'bold'
-                }}
-            >
-                &times;
-            </button>
-            <style>{`
+  return (
+    <div style={{
+      position: 'fixed',
+      top: '20px',
+      right: '20px',
+      padding: '12px 25px',
+      backgroundColor: backgroundColor,
+      border: `1px solid ${borderColor}`,
+      borderRadius: '8px',
+      zIndex: 1000,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+      color: '#333',
+      fontSize: '16px',
+      fontWeight: 'bold',
+      animation: 'fadeInOut 4s forwards' // Basic animation
+    }}>
+      <span>{message}</span>
+      <button
+        onClick={onClose}
+        style={{
+          marginLeft: '15px',
+          background: 'none',
+          border: 'none',
+          fontSize: '18px',
+          cursor: 'pointer',
+          color: '#333',
+          fontWeight: 'bold'
+        }}
+      >
+        &times;
+      </button>
+      <style>{`
                 @keyframes fadeInOut {
                     0% { opacity: 0; transform: translateY(-20px); }
                     10% { opacity: 1; transform: translateY(0); }
@@ -228,8 +253,8 @@ const PopupComponent = ({ type, message, onClose }) => {
                     100% { opacity: 0; transform: translateY(-20px); }
                 }
             `}</style>
-        </div>
-    );
+    </div>
+  );
 };
 
 

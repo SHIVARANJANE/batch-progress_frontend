@@ -111,3 +111,31 @@
     90% { opacity: 1; transform: translateY(0); }
     100% { opacity: 0; transform: translateY(-20px); }
 }
+/* src/components/Batches/BatchList.css */
+
+.student-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 0;
+  border-bottom: 1px dashed #eee;
+}
+
+.student-list-item:last-child {
+  border-bottom: none;
+}
+
+.mark-complete-button {
+  background-color: #28a745; /* Green */
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.85em;
+  transition: background-color 0.3s ease;
+}
+
+.mark-complete-button:hover {
+  background-color: #218838; /* Darker green on hover */
+}
