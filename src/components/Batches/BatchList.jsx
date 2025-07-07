@@ -84,6 +84,9 @@ const BatchList = ({ staffId, isAdminView }) => {
     }
   };
 
+  // Get user role once to use in conditional rendering
+  const userRole = localStorage.getItem('role');
+
   if (loading) {
     return <div className="loading-message">Loading batches...</div>;
   }
@@ -97,8 +100,8 @@ const BatchList = ({ staffId, isAdminView }) => {
       <div className="batch-list-container">
         <div className="batch-list-header">
           <h3>{isAdminView ? 'All Batches' : 'My Batches'}</h3>
-          {/* Conditionally render back button only if not in admin view */}
-          {!isAdminView && (
+          {/* Conditionally render back button only if not in admin view AND not staff */}
+          {!isAdminView && userRole !== 'staff' && (
             <button className="back-button" onClick={() => navigate(getDashboardPath())}>
               ← Back to Dashboard
             </button>
@@ -113,8 +116,8 @@ const BatchList = ({ staffId, isAdminView }) => {
     <div className="batch-list-container">
       <div className="batch-list-header">
         <h3>{isAdminView ? 'All Batches' : 'My Batches'}</h3>
-        {/* Conditionally render back button only if not in admin view */}
-        {!isAdminView && (
+        {/* Conditionally render back button only if not in admin view AND not staff */}
+        {!isAdminView && userRole !== 'staff' && (
           <button className="back-button" onClick={() => navigate(getDashboardPath())}>
             ← Back to Dashboard
           </button>

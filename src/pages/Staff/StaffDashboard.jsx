@@ -4,7 +4,8 @@ import axios from 'axios';
 import StudentAttendanceModal from '../../components/Students/StudentsAttendanceModal';
 import BatchList from '../../components/Batches/BatchList';
 import './StaffDashboard.css';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate
+import { useNavigate } from 'react-router-dom';
+import { FaUserCircle } from 'react-icons/fa'; // Import FaUserCircle
 
 const StaffDashboard = () => {
   const [students, setStudents] = useState([]);
@@ -12,9 +13,10 @@ const StaffDashboard = () => {
   const [activeTab, setActiveTab] = useState('attendance');
   const [loadingStudents, setLoadingStudents] = useState(true);
   const [errorStudents, setErrorStudents] = useState(null);
+  const [showProfile, setShowProfile] = useState(false); // New state for profile dropdown
 
   const staffId = localStorage.getItem('staffId');
-  const navigate = useNavigate(); // Initialize useNavigate
+  const navigate = useNavigate();
 
   // Helper to get the correct dashboard path
   const getDashboardPath = () => {
@@ -25,11 +27,11 @@ const StaffDashboard = () => {
       case 'admin':
         return '/AdminDashboard';
       case 'staff':
-        return '/StaffDashboard'; // Staff's own dashboard
+        return '/StaffDashboard';
       case 'student':
         return '/StudentDashboard';
       default:
-        return '/'; // Default to home/login
+        return '/';
     }
   };
 
@@ -46,7 +48,6 @@ const StaffDashboard = () => {
       setErrorStudents(null);
 
       try {
-        // Ensure this API endpoint populates the 'enrollmentId' field to get access to startDate and endDate
         const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/students?staffId=${staffId}`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
@@ -98,11 +99,24 @@ const StaffDashboard = () => {
 
   return (
     <div className="staff-dashboard-container">
-      <div className="dashboard-header-container"> {/* New container for header and button */}
+      <div className='top-bar'> {/* Added top-bar for profile icon */}
+        <div className='icon-wrapper' onClick={() => setShowProfile(!showProfile)}>
+          <FaUserCircle className='icon' />
+          {showProfile && (
+            <div className='dropdown profile'>
+              <h4>Profile</h4>
+              <p>Email: {localStorage.getItem('email') || 'Unknown'}</p>
+              <p>Role: Staff</p> {/* Display Staff role */}
+              <button onClick={() => {
+                localStorage.clear();
+                navigate('/');
+              }}>Logout</button>
+            </div>
+          )}
+        </div>
+      </div>
+      <div className="dashboard-header-container">
         <h2>Staff Dashboard</h2>
-        <button className="back-button" onClick={() => navigate(getDashboardPath())}>
-          ← Back to Dashboard
-        </button>
       </div>
 
       <div className="tabs-navigation">
@@ -138,8 +152,8 @@ const StaffDashboard = () => {
                     <th>Email</th>
                     <th>Course</th>
                     <th>Batch Slot</th>
-                    <th className="start-date-header">Start Date</th> {/* Added header */}
-                    <th className="end-date-header">End Date</th> {/* Added header */}
+                    <th className="start-date-header">Start Date</th>
+                    <th className="end-date-header">End Date</th>
                     <th>Action</th>
                   </tr>
                 </thead>

@@ -1,16 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import StudentAttendanceModal from '../../components/Students/StudentsAttendanceModal';
-import './StudentDashboard.css'; // Import the new CSS file
-import { useNavigate } from 'react-router-dom'; // Import useNavigate
+import './StudentDashboard.css';
+import { useNavigate } from 'react-router-dom';
+import { FaUserCircle } from 'react-icons/fa'; // Import FaUserCircle
 
 const StudentDashboard = ({ studentId }) => {
   const [student, setStudent] = useState(null);
   const [feedback, setFeedback] = useState('');
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
-  const [showAttendanceModal, setShowAttendanceModal] = useState(false); // Renamed to avoid confusion with tab
+  const [showAttendanceModal, setShowAttendanceModal] = useState(false);
   const [error, setError] = useState(null);
-  const [selectedTab, setSelectedTab] = useState('attendance'); // 'attendance' or 'feedback'
-  const navigate = useNavigate(); // Initialize useNavigate
+  const [selectedTab, setSelectedTab] = useState('attendance');
+  const [showProfile, setShowProfile] = useState(false); // New state for profile dropdown
+  const navigate = useNavigate();
 
   // Helper to get the correct dashboard path
   const getDashboardPath = () => {
@@ -23,9 +25,9 @@ const StudentDashboard = ({ studentId }) => {
       case 'staff':
         return '/StaffDashboard';
       case 'student':
-        return '/StudentDashboard'; // Student's own dashboard
+        return '/StudentDashboard';
       default:
-        return '/'; // Default to home/login
+        return '/';
     }
   };
 
@@ -84,11 +86,24 @@ const StudentDashboard = ({ studentId }) => {
 
   return (
     <div className="student-dashboard">
-      <div className="dashboard-header-container"> {/* New container for header and button */}
+      <div className='top-bar'> {/* Added top-bar for profile icon */}
+        <div className='icon-wrapper' onClick={() => setShowProfile(!showProfile)}>
+          <FaUserCircle className='icon' />
+          {showProfile && (
+            <div className='dropdown profile'>
+              <h4>Profile</h4>
+              <p>Email: {localStorage.getItem('email') || 'Unknown'}</p>
+              <p>Role: Student</p> {/* Display Student role */}
+              <button onClick={() => {
+                localStorage.clear();
+                navigate('/');
+              }}>Logout</button>
+            </div>
+          )}
+        </div>
+      </div>
+      <div className="dashboard-header-container">
         <h2>Welcome, {student.name}</h2>
-        <button className="back-button" onClick={() => navigate(getDashboardPath())}>
-          ← Back to Dashboard
-        </button>
       </div>
 
       <div className="tabs-container">
@@ -116,7 +131,7 @@ const StudentDashboard = ({ studentId }) => {
             {showAttendanceModal && (
               <StudentAttendanceModal
                 student={student}
-                editable={false} // read-only for students
+                editable={false}
                 onClose={() => setShowAttendanceModal(false)}
               />
             )}
