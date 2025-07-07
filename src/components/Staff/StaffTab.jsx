@@ -12,10 +12,10 @@ function StaffTab({ isAdminView = false }) {
   const [availabilityData, setAvailabilityData] = useState([]);
   const [showCompletionView, setShowCompletionView] = useState(false);
   const navigate = useNavigate(); // Initialize useNavigate
+  const userRole = localStorage.getItem('role'); // Get user role
 
   // Helper to get the correct dashboard path
   const getDashboardPath = () => {
-    const userRole = localStorage.getItem('role');
     switch (userRole) {
       case 'super_user':
         return '/SuperAdminDashboard';
@@ -73,19 +73,25 @@ function StaffTab({ isAdminView = false }) {
     }
   };
 
+  // Determine if the current user is an admin
+  const isCurrentUserAdmin = userRole === 'admin';
+  const isCurrentUserSuperAdmin = userRole === 'super_user';
+
+
   return (
     <div className="staff-tab">
       {/* Header Section with Add + Completion Button */}
       <div className="staff-header">
         <h2>👩‍🏫 Staff Directory</h2>
-        {/* Conditionally render back button only if not in admin view */}
-        {!isAdminView && (
+        {/* Conditionally render back button only if not in admin view (meaning it's super admin view or staff/student) */}
+        {!isAdminView && ( // This prop isAdminView typically means it's for the admin dashboard, where 'Add Staff' and 'Edit/Delete' are available
           <button className="back-button" onClick={() => navigate(getDashboardPath())}>
             ← Back to Dashboard
           </button>
         )}
         <div className="header-actions">
-          {!isAdminView && (
+          {/* Only Super Admin can add staff */}
+          {isCurrentUserSuperAdmin && (
             <button className="add-btn" onClick={() => setShowForm(true)}>
               ➕ Add Staff
             </button>
@@ -104,11 +110,13 @@ function StaffTab({ isAdminView = false }) {
               </div>
               <div className="staff-actions">
                 <button onClick={() => handleViewAvailability(staff)}>📅 View Availability</button>
-                {!isAdminView && (
-                  <>
-                    <button onClick={() => handleEdit(staff)}>✏️ Edit</button>
-                    <button onClick={() => handleDelete(staff._id)}>🗑️ Delete</button>
-                  </>
+                {/* Edit button: Super admin can edit everything, Admin can edit working hours/availability */}
+                {(isCurrentUserSuperAdmin || isCurrentUserAdmin) && (
+                  <button onClick={() => handleEdit(staff)}>✏️ Edit</button>
+                )}
+                {/* Delete button: Only Super Admin can delete */}
+                {isCurrentUserSuperAdmin && (
+                  <button onClick={() => handleDelete(staff._id)}>🗑️ Delete</button>
                 )}
               </div>
             </div>
@@ -119,7 +127,7 @@ function StaffTab({ isAdminView = false }) {
       </div>
 
       {/* Staff Form Modal */}
-      {showForm && !isAdminView && (
+      {showForm && (isCurrentUserSuperAdmin || (isCurrentUserAdmin && editingStaff)) && ( // Show form if super admin or admin editing an existing staff
         <StaffForm
           onClose={() => {
             setShowForm(false);
@@ -127,6 +135,7 @@ function StaffTab({ isAdminView = false }) {
           }}
           onSubmit={handleFormSubmit}
           staff={editingStaff}
+          isAdminEditing={isCurrentUserAdmin && editingStaff !== null} // Pass isAdminEditing prop
         />
       )}
 

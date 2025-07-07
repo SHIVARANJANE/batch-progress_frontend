@@ -13,7 +13,8 @@ const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'
 // Define the frequency options
 const FREQUENCY_OPTIONS = ['daily', 'alternatedays', 'weekend', 'only sunday'];
 
-const StaffForm = ({ onClose, onSubmit, staff }) => {
+// Add isAdminEditing prop
+const StaffForm = ({ onClose, onSubmit, staff, isAdminEditing = false }) => { // Added isAdminEditing prop with default false
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -29,8 +30,7 @@ const StaffForm = ({ onClose, onSubmit, staff }) => {
     maxHoursPerDay: 8,
     workingDays: [],
     availability: {},
-    // NEW FIELD: frequency
-    frequency: 'daily' // Set a default frequency
+    frequency: 'daily'
   });
 
   const [courseOptions, setCourseOptions] = useState([]);
@@ -51,7 +51,6 @@ const StaffForm = ({ onClose, onSubmit, staff }) => {
         availability: staff.availability || {},
         isAdmin: !!staff.isAdmin,
         staffType: staff.staffType || 'Full-time',
-        // Set frequency from existing staff data, or default if not present
         frequency: staff.frequency || 'daily'
       });
     }
@@ -111,8 +110,24 @@ const StaffForm = ({ onClose, onSubmit, staff }) => {
       };
 
       if (staff && staff._id) {
-        await axios.put(`${process.env.REACT_APP_API_BASE_URL}/api/staff/${staff._id}`, payload);
+        // If it's an admin editing, only send the editable fields
+        if (isAdminEditing) {
+          const adminEditablePayload = {
+            staffType: payload.staffType,
+            status: payload.status,
+            frequency: payload.frequency,
+            maxHoursPerDay: payload.maxHoursPerDay,
+            workingDays: payload.workingDays,
+            availability: payload.availability,
+            courses: payload.courses,
+          };
+          await axios.put(`${process.env.REACT_APP_API_BASE_URL}/api/staff/${staff._id}`, adminEditablePayload);
+        } else {
+          // Full payload for super admin or new staff creation
+          await axios.put(`${process.env.REACT_APP_API_BASE_URL}/api/staff/${staff._id}`, payload);
+        }
       } else {
+        // For new staff creation, always send full payload
         await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/staff`, payload);
       }
       onSubmit();
@@ -124,28 +139,29 @@ const StaffForm = ({ onClose, onSubmit, staff }) => {
   return (
     <div className="modal-overlay">
       <div className="form-modal">
-        <h3>{staff ? 'Edit Staff' : 'Add Staff'}</h3>
+        <h3>{staff ? (isAdminEditing ? 'Edit Staff Availability' : 'Edit Staff') : 'Add Staff'}</h3>
         <form onSubmit={handleSubmit}>
-          <input name="name" placeholder="Name" value={form.name} onChange={handleChange} required />
-          <input name="email" placeholder="Email" value={form.email} onChange={handleChange} required />
-          <input name="mobile" placeholder="Mobile No." value={form.mobile} onChange={handleChange} required />
-          <input name="password" placeholder="Password" type="password" value={form.password} onChange={handleChange} required={!staff} />
-          <input name="salary" placeholder="Salary" value={form.salary} onChange={handleChange} required />
-          <input name="expertise" placeholder="Expertise" value={form.expertise} onChange={handleChange} />
+          {/* Personal Details - Conditionally disabled/hidden for admin editing */}
+          <input name="name" placeholder="Name" value={form.name} onChange={handleChange} required disabled={isAdminEditing} />
+          <input name="email" placeholder="Email" value={form.email} onChange={handleChange} required disabled={isAdminEditing} />
+          <input name="mobile" placeholder="Mobile No." value={form.mobile} onChange={handleChange} required disabled={isAdminEditing} />
+          <input name="password" placeholder="Password" type="password" value={form.password} onChange={handleChange} required={!staff && !isAdminEditing} disabled={isAdminEditing} /> {/* Password required only for new staff, and not for admin editing */}
+          <input name="salary" placeholder="Salary" value={form.salary} onChange={handleChange} required /* REMOVED disabled={isAdminEditing} */ /> {/* */}
+          <input name="expertise" placeholder="Expertise" value={form.expertise} onChange={handleChange} disabled={isAdminEditing} />
 
           <label>Is Admin?</label>
-          <select name="isAdmin" value={form.isAdmin} onChange={handleChange}>
+          <select name="isAdmin" value={form.isAdmin} onChange={handleChange} disabled={isAdminEditing}>
             <option value={false}>No</option>
             <option value={true}>Yes</option>
           </select>
 
+          {/* Staff Type and below - always editable */}
           <label>Staff Type</label>
           <select name="staffType" value={form.staffType} onChange={handleChange}>
             <option value="Full-time">Full-time</option>
             <option value="Part-time">Part-time</option>
           </select>
 
-          {/* NEW FIELD: Frequency */}
           <label>Frequency</label>
           <select name="frequency" value={form.frequency} onChange={handleChange}>
             {FREQUENCY_OPTIONS.map(option => (
