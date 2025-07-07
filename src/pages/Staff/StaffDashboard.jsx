@@ -4,6 +4,7 @@ import axios from 'axios';
 import StudentAttendanceModal from '../../components/Students/StudentsAttendanceModal';
 import BatchList from '../../components/Batches/BatchList';
 import './StaffDashboard.css';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
 
 const StaffDashboard = () => {
   const [students, setStudents] = useState([]);
@@ -13,6 +14,24 @@ const StaffDashboard = () => {
   const [errorStudents, setErrorStudents] = useState(null);
 
   const staffId = localStorage.getItem('staffId');
+  const navigate = useNavigate(); // Initialize useNavigate
+
+  // Helper to get the correct dashboard path
+  const getDashboardPath = () => {
+    const userRole = localStorage.getItem('role');
+    switch (userRole) {
+      case 'super_user':
+        return '/SuperAdminDashboard';
+      case 'admin':
+        return '/AdminDashboard';
+      case 'staff':
+        return '/StaffDashboard'; // Staff's own dashboard
+      case 'student':
+        return '/StudentDashboard';
+      default:
+        return '/'; // Default to home/login
+    }
+  };
 
   useEffect(() => {
     const fetchStudents = async () => {
@@ -79,7 +98,12 @@ const StaffDashboard = () => {
 
   return (
     <div className="staff-dashboard-container">
-      <h2>Staff Dashboard</h2>
+      <div className="dashboard-header-container"> {/* New container for header and button */}
+        <h2>Staff Dashboard</h2>
+        <button className="back-button" onClick={() => navigate(getDashboardPath())}>
+          ← Back to Dashboard
+        </button>
+      </div>
 
       <div className="tabs-navigation">
         <button

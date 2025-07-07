@@ -3,6 +3,7 @@ import axios from "axios";
 import CourseTable from "./CourseTable";
 import CourseForm from "./CourseForm";
 import './Courses.css';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
 
 function Courses() {
   const [courses, setCourses] = useState([]);
@@ -12,6 +13,24 @@ function Courses() {
   const [filterVertical, setFilterVertical] = useState('');
   const role = localStorage.getItem('role');
   const isAdminView = role === 'admin';
+  const navigate = useNavigate(); // Initialize useNavigate
+
+  // Helper to get the correct dashboard path
+  const getDashboardPath = () => {
+    const userRole = localStorage.getItem('role');
+    switch (userRole) {
+      case 'super_user':
+        return '/SuperAdminDashboard';
+      case 'admin':
+        return '/AdminDashboard';
+      case 'staff':
+        return '/StaffDashboard';
+      case 'student':
+        return '/StudentDashboard';
+      default:
+        return '/'; // Default to home/login
+    }
+  };
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -76,6 +95,9 @@ function Courses() {
     <div className="courses-container">
       <div className="courses-header">
         <h2>📚 Course List</h2>
+        <button className="back-button" onClick={() => navigate(getDashboardPath())}>
+          ← Back to Dashboard
+        </button>
         {isAdminView && (
           <button className="add-course-btn" onClick={handleAddClick}>
             ➕ Add Course

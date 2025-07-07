@@ -1,4 +1,5 @@
 import React from "react";
+import { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Home from "./pages/Login/Home";
 import Login from "./pages/Login/Login";
@@ -12,7 +13,23 @@ import StaffTab from "./components/Staff/StaffTab";
 import Students from "./components/Students/Students";
 import BatchList from "./components/Batches/BatchList";
 import StudentFormModal from "./components/Students/StudentFormModal";
+import UserManagementTab from "./components/UserManagementTab";
 function App() {
+    const [token, setToken] = useState(localStorage.getItem('token')); // State to hold the token
+
+    // Listen for changes in localStorage (e.g., after login/logout)
+    useEffect(() => {
+        const handleStorageChange = () => {
+            setToken(localStorage.getItem('token'));
+        };
+
+        window.addEventListener('storage', handleStorageChange);
+
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+        };
+    }, []);
+
     return (
         <Router>
             <div>
@@ -21,6 +38,7 @@ function App() {
                     <Route path="/login" element={<Login />} />
                     <Route path="/forgot-password" element={<ForgotPassword />} />
                     <Route path="/SuperAdminDashboard" element={<SuperAdminDashboard />} />
+                    <Route path="/usermanagement" element={<UserManagementTab token={token} />} />
                     <Route path="/courses" element={<Courses />} />
                     <Route path="/staff" element={<StaffTab />} />
                     <Route path="/students" element={<Students />} />

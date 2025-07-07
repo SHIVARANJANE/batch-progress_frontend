@@ -3,6 +3,7 @@ import axios from 'axios';
 import StaffForm from './StaffForm';
 import StaffCompletionView from './StaffCompletionView';
 import './StaffTab.css';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
 
 function StaffTab({ isAdminView = false }) {
   const [staffs, setStaffs] = useState([]);
@@ -11,6 +12,24 @@ function StaffTab({ isAdminView = false }) {
   const [viewAvailability, setViewAvailability] = useState(null);
   const [availabilityData, setAvailabilityData] = useState([]);
   const [showCompletionView, setShowCompletionView] = useState(false);
+  const navigate = useNavigate(); // Initialize useNavigate
+
+  // Helper to get the correct dashboard path
+  const getDashboardPath = () => {
+    const userRole = localStorage.getItem('role');
+    switch (userRole) {
+      case 'super_user':
+        return '/SuperAdminDashboard';
+      case 'admin':
+        return '/AdminDashboard';
+      case 'staff':
+        return '/StaffDashboard';
+      case 'student':
+        return '/StudentDashboard';
+      default:
+        return '/'; // Default to home/login
+    }
+  };
 
   const fetchStaffs = async () => {
     try {
@@ -48,7 +67,6 @@ function StaffTab({ isAdminView = false }) {
       const res = await axios.get(
         `${process.env.REACT_APP_API_BASE_URL}/api/staff/staff-occupancy/${staff._id}?view=availability`
       );
-      // Corrected line: Access res.data directly, as it contains the occupancy array
       setAvailabilityData(res.data || []);
       setViewAvailability(staff);
     } catch (err) {
@@ -61,6 +79,12 @@ function StaffTab({ isAdminView = false }) {
       {/* Header Section with Add + Completion Button */}
       <div className="staff-header">
         <h2>👩‍🏫 Staff Directory</h2>
+        {/* Conditionally render back button only if not in admin view */}
+        {!isAdminView && (
+          <button className="back-button" onClick={() => navigate(getDashboardPath())}>
+            ← Back to Dashboard
+          </button>
+        )}
         <div className="header-actions">
           {!isAdminView && (
             <button className="add-btn" onClick={() => setShowForm(true)}>

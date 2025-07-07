@@ -2,12 +2,31 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './BatchList.css'; // Create this CSS file for styling
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
 
 const BatchList = ({ staffId, isAdminView }) => {
   const [batches, setBatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [popup, setPopup] = useState({ visible: false, type: '', message: '' }); // State for popups
+  const navigate = useNavigate(); // Initialize useNavigate
+
+  // Helper to get the correct dashboard path
+  const getDashboardPath = () => {
+    const userRole = localStorage.getItem('role');
+    switch (userRole) {
+      case 'super_user':
+        return '/SuperAdminDashboard';
+      case 'admin':
+        return '/AdminDashboard';
+      case 'staff':
+        return '/StaffDashboard';
+      case 'student':
+        return '/StudentDashboard';
+      default:
+        return '/'; // Default to home/login
+    }
+  };
 
   // Function to show UI popups
   const showUIPopup = (type, message) => {
@@ -74,12 +93,33 @@ const BatchList = ({ staffId, isAdminView }) => {
   }
 
   if (batches.length === 0) {
-    return <div className="no-data-message">No batches found for this view.</div>;
+    return (
+      <div className="batch-list-container">
+        <div className="batch-list-header">
+          <h3>{isAdminView ? 'All Batches' : 'My Batches'}</h3>
+          {/* Conditionally render back button only if not in admin view */}
+          {!isAdminView && (
+            <button className="back-button" onClick={() => navigate(getDashboardPath())}>
+              ← Back to Dashboard
+            </button>
+          )}
+        </div>
+        <div className="no-data-message">No batches found for this view.</div>
+      </div>
+    );
   }
 
   return (
     <div className="batch-list-container">
-      <h3>{isAdminView ? 'All Batches' : 'My Batches'}</h3>
+      <div className="batch-list-header">
+        <h3>{isAdminView ? 'All Batches' : 'My Batches'}</h3>
+        {/* Conditionally render back button only if not in admin view */}
+        {!isAdminView && (
+          <button className="back-button" onClick={() => navigate(getDashboardPath())}>
+            ← Back to Dashboard
+          </button>
+        )}
+      </div>
       {batches.map(batch => (
         <div key={batch._id} className="batch-card">
           <div className="batch-header">

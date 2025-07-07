@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { FaBell, FaUserCircle } from 'react-icons/fa';
 import StaffTab from '../../components/Staff/StaffTab'; // Assuming this path is correct
 import BatchList from '../../components/Batches/BatchList'; // <--- ADD THIS LINE
-
+import './AdminDashboard.css'; // Assuming you have a CSS file for styling
 function AdminDashboard() {
     const navigate = useNavigate();
     const [showNotifications, setNotifications] = useState(false);
@@ -16,6 +16,26 @@ function AdminDashboard() {
         "Batch B is delayed",
         "New course added: Course C"
     ];
+
+    // Helper to get the correct dashboard path (for the back button in sub-views)
+    // This function is primarily used by components that are standalone pages,
+    // not typically by AdminDashboard itself to navigate to its sub-views.
+    // However, it's good to keep it for consistency if needed elsewhere.
+    const getDashboardPath = () => {
+      const userRole = localStorage.getItem('role');
+      switch (userRole) {
+        case 'super_user':
+          return '/SuperAdminDashboard';
+        case 'admin':
+          return '/AdminDashboard'; // Admin's own dashboard
+        case 'staff':
+          return '/StaffDashboard';
+        case 'student':
+          return '/StudentDashboard';
+        default:
+          return '/'; // Default to home/login
+      }
+    };
 
     return (
         <div className="dashboard-container">
@@ -72,6 +92,7 @@ function AdminDashboard() {
 
             {viewing === 'staff' && (
                 <div>
+                    {/* Changed to setViewing('dashboard') to go back to Admin Dashboard overview */}
                     <button className="back-button" onClick={() => setViewing('dashboard')}>← Back to Dashboard</button>
                     <StaffTab isAdminView={true} />
                 </div>
@@ -80,6 +101,7 @@ function AdminDashboard() {
             {/* New Batches View */}
             {viewing === 'batches' && (
                 <div>
+                    {/* Changed to setViewing('dashboard') to go back to Admin Dashboard overview */}
                     <button className="back-button" onClick={() => setViewing('dashboard')}>← Back to Dashboard</button>
                     {/* Render BatchList for admin view */}
                     <BatchList isAdminView={true} />

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import StudentAttendanceModal from '../../components/Students/StudentsAttendanceModal';
 import './StudentDashboard.css'; // Import the new CSS file
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
 
 const StudentDashboard = ({ studentId }) => {
   const [student, setStudent] = useState(null);
@@ -9,6 +10,24 @@ const StudentDashboard = ({ studentId }) => {
   const [showAttendanceModal, setShowAttendanceModal] = useState(false); // Renamed to avoid confusion with tab
   const [error, setError] = useState(null);
   const [selectedTab, setSelectedTab] = useState('attendance'); // 'attendance' or 'feedback'
+  const navigate = useNavigate(); // Initialize useNavigate
+
+  // Helper to get the correct dashboard path
+  const getDashboardPath = () => {
+    const userRole = localStorage.getItem('role');
+    switch (userRole) {
+      case 'super_user':
+        return '/SuperAdminDashboard';
+      case 'admin':
+        return '/AdminDashboard';
+      case 'staff':
+        return '/StaffDashboard';
+      case 'student':
+        return '/StudentDashboard'; // Student's own dashboard
+      default:
+        return '/'; // Default to home/login
+    }
+  };
 
   useEffect(() => {
     if (studentId) {
@@ -65,7 +84,12 @@ const StudentDashboard = ({ studentId }) => {
 
   return (
     <div className="student-dashboard">
-      <h2>Welcome, {student.name}</h2>
+      <div className="dashboard-header-container"> {/* New container for header and button */}
+        <h2>Welcome, {student.name}</h2>
+        <button className="back-button" onClick={() => navigate(getDashboardPath())}>
+          ← Back to Dashboard
+        </button>
+      </div>
 
       <div className="tabs-container">
         <button
@@ -85,11 +109,6 @@ const StudentDashboard = ({ studentId }) => {
       <div className="tab-content">
         {selectedTab === 'attendance' && (
           <div className="attendance-section">
-            {/* The StudentAttendanceModal should ideally be rendered directly here
-                or its content integrated, not as a modal that covers the whole page,
-                if it's a "tab". But based on current usage, we'll keep it as a modal
-                that opens, or you can refactor StudentAttendanceModal to be just a component.
-                For now, clicking 'View Attendance' tab will open the modal.*/}
             <p>Click the button below to view your attendance history.</p>
             <button className="open-attendance-button" onClick={() => setShowAttendanceModal(true)}>
               Show My Attendance

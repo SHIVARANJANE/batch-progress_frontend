@@ -1,0 +1,39 @@
+/* common-back-button.css */
+
+.back-button {
+  background-color: #6c757d; /* A neutral gray */
+  color: white;
+  padding: 8px 15px;
+  border: none;
+  border-radius: 5px;
+  font-size: 0.9em;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  margin-bottom: 20px; /* Space below the button */
+  display: inline-flex; /* Align icon and text */
+  align-items: center;
+  gap: 5px; /* Space between arrow and text */
+}
+
+.back-button:hover {
+  background-color: #5a6268;
+  transform: translateY(-1px);
+}
+
+/* For components where the back button is part of a header,
+   you might need a container to manage layout. */
+.students-header-container,
+.staff-header,
+.courses-header,
+.batch-list-header,
+.dashboard-header-container { /* Added for consistency */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px; /* Adjust as needed */
+  width: 100%; /* Ensure it takes full width of its parent */
+}
+
+/* Specific adjustments if needed for existing layouts */
+/* Example: If a header already has padding, adjust margin-top/bottom */
+/* .staff-header .back-button { margin-top: 0; margin-bottom: 0; } */

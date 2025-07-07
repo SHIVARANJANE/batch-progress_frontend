@@ -5,6 +5,7 @@ import StudentsTable from './StudentsTable';
 import StudentFormModal from './StudentFormModal';
 import './Students.css'; // New CSS file for styles
 import StudentAttendanceModal from './StudentsAttendanceModal';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
 
 const Students = () => {
   const [students, setStudents] = useState([]);
@@ -13,6 +14,24 @@ const Students = () => {
   const [selectedStudent, setSelectedStudent] = useState(null);
   const role = localStorage.getItem('role');
   const isAdminView = role === 'admin';
+  const navigate = useNavigate(); // Initialize useNavigate
+
+  // Helper to get the correct dashboard path
+  const getDashboardPath = () => {
+    const userRole = localStorage.getItem('role');
+    switch (userRole) {
+      case 'super_user':
+        return '/SuperAdminDashboard';
+      case 'admin':
+        return '/AdminDashboard';
+      case 'staff':
+        return '/StaffDashboard';
+      case 'student':
+        return '/StudentDashboard';
+      default:
+        return '/'; // Default to home/login
+    }
+  };
 
   const fetchStudents = async () => {
     try {
@@ -96,7 +115,12 @@ const Students = () => {
 
   return (
     <div className="students-page">
-      <h2>📋 Registered Students</h2>
+      <div className="students-header-container"> {/* New container for header and button */}
+        <h2>📋 Registered Students</h2>
+        <button className="back-button" onClick={() => navigate(getDashboardPath())}>
+          ← Back to Dashboard
+        </button>
+      </div>
       {isAdminView && (
         <button className="add-button" onClick={() => {
           setEditingStudent(null);
