@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import './StudentAttendanceModal.css'; // new CSS file for styles
-
+import { ToastContainer, toast } from 'react-toastify'; // Import ToastContainer and toast
+import 'react-toastify/dist/ReactToastify.css';
 const getStatusColor = (status) => {
   switch (status) {
     case 'Present':

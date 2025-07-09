@@ -6,6 +6,8 @@ import BatchList from '../../components/Batches/BatchList';
 import './StaffDashboard.css';
 import { useNavigate } from 'react-router-dom';
 import { FaUserCircle } from 'react-icons/fa'; // Import FaUserCircle
+import { ToastContainer, toast } from 'react-toastify'; // Import ToastContainer and toast
+import 'react-toastify/dist/ReactToastify.css'; // Import toastify CSS
 
 const StaffDashboard = () => {
   const [students, setStudents] = useState([]);
@@ -63,6 +65,7 @@ const StaffDashboard = () => {
       } catch (error) {
         console.error("Error fetching students for staff:", error.response?.data || error.message);
         setErrorStudents(`Failed to load students: ${error.response?.data?.message || error.message}`);
+        toast.error(`Failed to load students: ${error.response?.data?.message || error.message}`); // Added toast for fetch error
         setStudents([]);
       } finally {
         setLoadingStudents(false);
@@ -79,7 +82,14 @@ const StaffDashboard = () => {
       }
     })
       .then(res => {
+        // Optimistically update the UI if the API call is successful
+        // This makes the UI feel more responsive
         const updatedAttendance = { ...selectedStudent.attendance, [date]: status };
+        // If status is null (meaning 'Clear'), remove the entry for that date
+        if (status === null) {
+          delete updatedAttendance[date];
+        }
+
         setSelectedStudent({ ...selectedStudent, attendance: updatedAttendance });
 
         setStudents(prevStudents =>
@@ -89,11 +99,13 @@ const StaffDashboard = () => {
               : s
           )
         );
-        alert("Attendance marked successfully!");
+        // Replace alert with toast.success
+        toast.success("Attendance marked successfully!");
       })
       .catch(err => {
         console.error('Error marking attendance:', err.response?.data || err.message);
-        alert(`Failed to mark attendance: ${err.response?.data?.message || 'Please try again.'}`);
+        // Replace alert with toast.error
+        toast.error(`Failed to mark attendance: ${err.response?.data?.message || 'Please try again.'}`);
       });
   };
 
@@ -196,6 +208,7 @@ const StaffDashboard = () => {
           onAttendanceMarked={handleAttendanceMarked}
         />
       )}
+      <ToastContainer position="bottom-right" autoClose={3000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
     </div>
   );
 };

@@ -6,6 +6,8 @@ import StudentFormModal from './StudentFormModal';
 import './Students.css'; // New CSS file for styles
 import StudentAttendanceModal from './StudentsAttendanceModal';
 import { useNavigate } from 'react-router-dom'; // Import useNavigate
+import { ToastContainer, toast } from 'react-toastify'; // Import ToastContainer and toast
+import 'react-toastify/dist/ReactToastify.css'; // Import toastify CSS
 
 const Students = () => {
   const [students, setStudents] = useState([]);
@@ -39,6 +41,8 @@ const Students = () => {
       setStudents(res.data.data);
     } catch (err) {
       console.error('Failed to fetch students:', err);
+      // Optionally show a toast for fetching error if needed
+      toast.error('Failed to load students.');
     }
   };
 
@@ -65,15 +69,18 @@ const Students = () => {
 
       if (editingStudent) {
         await axios.put(`${process.env.REACT_APP_API_BASE_URL}/api/students/${editingStudent._id}`, payload);
+        toast.success('Student updated successfully!'); // Success toast for update
       } else {
         await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/students`, payload);
+        toast.success('Student added successfully!'); // Success toast for add
       }
       setShowForm(false);
       setEditingStudent(null);
       fetchStudents(); // Refresh the list
     } catch (err) {
       console.error('Failed to save student:', err.response?.data?.error || err.message);
-      alert(`Failed to save student: ${err.response?.data?.error || err.message}`);
+      // Replace alert with toast.error
+      toast.error(`Failed to save student: ${err.response?.data?.error || err.message}`);
     }
   };
 
@@ -82,9 +89,11 @@ const Students = () => {
       try {
         await axios.delete(`${process.env.REACT_APP_API_BASE_URL}/api/students/${id}`);
         fetchStudents(); // Refresh the list
+        toast.success('Student deleted successfully!'); // Success toast for delete
       } catch (err) {
         console.error('Failed to delete student:', err);
-        alert('Failed to delete student.');
+        // Replace alert with toast.error
+        toast.error('Failed to delete student.');
       }
     }
   };
@@ -142,6 +151,13 @@ const Students = () => {
         <StudentAttendanceModal
           student={selectedStudent}
           onClose={() => setSelectedStudent(null)}
+          // Pass editable prop if you want attendance to be markable from here
+          editable={isAdminView}
+          // The onAttendanceMarked prop in Students.jsx won't directly trigger a toast
+          // unless you pass a function that then triggers it.
+          // For now, the toast logic is self-contained within StudentAttendanceModal.jsx
+          // as per the last modification. If you want a toast here as well,
+          // you would need a handleAttendanceMarked function similar to the example in the previous turn.
         />
       )}
       {showForm && (
@@ -154,6 +170,7 @@ const Students = () => {
           }}
         />
       )}
+      <ToastContainer position="bottom-right" autoClose={3000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
     </div>
   );
 };
