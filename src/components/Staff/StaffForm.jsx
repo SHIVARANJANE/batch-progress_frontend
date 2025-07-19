@@ -146,7 +146,7 @@ const StaffForm = ({ onClose, onSubmit, staff, isAdminEditing = false }) => { //
           <input name="email" placeholder="Email" value={form.email} onChange={handleChange} required disabled={isAdminEditing} />
           <input name="mobile" placeholder="Mobile No." value={form.mobile} onChange={handleChange} required disabled={isAdminEditing} />
           <input name="password" placeholder="Password" type="password" value={form.password} onChange={handleChange} required={!staff && !isAdminEditing} disabled={isAdminEditing} /> {/* Password required only for new staff, and not for admin editing */}
-          <input name="salary" placeholder="Salary" value={form.salary} onChange={handleChange} required /* REMOVED disabled={isAdminEditing} */ /> {/* */}
+          <input name="salary" placeholder="Salary" value={form.salary} onChange={handleChange}  required={!staff && !isAdminEditing} disabled={isAdminEditing} />
           <input name="expertise" placeholder="Expertise" value={form.expertise} onChange={handleChange} disabled={isAdminEditing} />
 
           <label>Is Admin?</label>
